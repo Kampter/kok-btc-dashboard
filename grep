@@ -1,0 +1,6 @@
+npm error code EINVALIDTAGNAME
+npm error code EINVALIDTAGNAME
+npm error Invalid tag name "express|adapters|node-http" of package "express|adapters|node-http": Tags may not have any characters that encodeURIComponent encodes.
+npm error Invalid tag name "express|adapters|node-http" of package "express|adapters|node-http": Tags may not have any characters that encodeURIComponent encodes.
+npm error A complete log of this run can be found in: /Users/wangzizheng/.npm/_logs/2026-05-17T14_57_52_021Z-debug-0.log
+npm error A complete log of this run can be found in: /Users/wangzizheng/.npm/_logs/2026-05-17T14_57_52_021Z-debug-0.log
