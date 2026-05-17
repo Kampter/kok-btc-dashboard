@@ -12,5 +12,5 @@
     "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src", "app", "pages", "components", "lib", "hooks"]
+  "include": ["src"]
 }

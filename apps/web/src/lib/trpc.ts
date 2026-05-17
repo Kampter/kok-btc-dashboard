@@ -1,7 +1,7 @@
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
-import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
-import { QueryClient } from '@tanstack/react-query';
-import type { AppRouter } from '@kok/shared-types';
+import { createTRPCClient, httpBatchLink } from '@trpc/client'
+import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
+import { QueryClient } from '@tanstack/react-query'
+import type { AppRouter } from '@kok/shared-types'
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
@@ -9,7 +9,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
       url: 'http://localhost:3000/trpc',
     }),
   ],
-});
+})
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,9 +19,9 @@ export const queryClient = new QueryClient({
       retry: 3,
     },
   },
-});
+})
 
 export const trpc = createTRPCOptionsProxy<AppRouter>({
   client: trpcClient,
   queryClient,
-});
+})
