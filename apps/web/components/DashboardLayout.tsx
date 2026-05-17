@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { MarketOverview } from './modules/MarketOverview';
+import { VolatilityAnalysis } from './modules/VolatilityAnalysis';
+import { PositionStructure } from './modules/PositionStructure';
+import { FundingSentiment } from './modules/FundingSentiment';
+import { ExpiryAnalysis } from './modules/ExpiryAnalysis';
 
 const MODULES = [
   { id: 'overview', label: '市场概况' },
@@ -42,19 +47,19 @@ export function DashboardLayout() {
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="text-muted-foreground">市场概况内容</div>
+            <MarketOverview />
           </TabsContent>
           <TabsContent value="volatility">
-            <div className="text-muted-foreground">波动率分析内容</div>
+            <VolatilityAnalysis />
           </TabsContent>
           <TabsContent value="positions">
-            <div className="text-muted-foreground">持仓结构内容</div>
+            <PositionStructure />
           </TabsContent>
           <TabsContent value="sentiment">
-            <div className="text-muted-foreground">资金情绪内容</div>
+            <FundingSentiment />
           </TabsContent>
           <TabsContent value="expiry">
-            <div className="text-muted-foreground">到期分析内容</div>
+            <ExpiryAnalysis />
           </TabsContent>
         </Tabs>
       </div>
