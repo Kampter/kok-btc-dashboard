@@ -49,3 +49,7 @@ Apps use composite project references (`tsconfig.json` + `tsconfig.node.json`) s
 ### Vite + React
 
 The frontend uses Vite with `@vitejs/plugin-react` for fast HMR. There is no SSR; it is a client-side SPA. Static assets go in `apps/web/public/`.
+
+## Language Requirements
+
+All documentation, comments, and user-facing text output must be written in Chinese (中文). Code identifiers, technical terms, and file paths remain in English, but all explanations, instructions, and prose should be in Chinese.
