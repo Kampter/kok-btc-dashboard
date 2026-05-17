@@ -13,8 +13,8 @@ export class DeribitController {
     return this.deribitService.getBookSummaryByCurrency(currency, kind);
   }
 
-  @Get('index')
-  async getIndex(@Query('currency') currency: string) {
-    return this.deribitService.getIndex(currency);
+  @Get('index-price')
+  async getIndexPrice(@Query('indexName') indexName: string) {
+    return this.deribitService.getIndexPrice(indexName);
   }
 }

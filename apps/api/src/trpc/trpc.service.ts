@@ -47,32 +47,36 @@ export class TrpcService {
       marketOverview: t.procedure.query(async () => {
         const [bookData, indexData] = await Promise.all([
           this.deribitService.getBookSummaryByCurrency('BTC', 'option'),
-          this.deribitService.getIndex('BTC'),
+          this.deribitService.getIndexPrice('btc_usd'),
         ]);
 
-        const btcPrice = indexData.btc ?? 0;
+        const btcPrice = indexData.index_price ?? 0;
+        const contractSize = 0.001; // BTC contract size on Deribit
 
         const totalOI = bookData.reduce(
-          (sum, item) => sum + ((item.open_interest_usd as number) ?? 0),
+          (sum, item) => sum + ((item.open_interest as number) ?? 0) * btcPrice * contractSize,
           0,
         );
         const totalVolume24h = bookData.reduce(
-          (sum, item) => sum + ((item.volume_usd as number) ?? 0),
+          (sum, item) => sum + ((item.volume as number) ?? 0) * btcPrice * contractSize,
           0,
         );
 
         // ATM IV: weighted average of mark_iv for strikes within ±2% of spot
-        const atmStrikes = bookData.filter((item) => {
-          const strike = (item.strike as number) ?? 0;
-          return strike >= btcPrice * 0.98 && strike <= btcPrice * 1.02;
-        });
-        const atmIV =
-          atmStrikes.length > 0
-            ? atmStrikes.reduce(
-                (sum, item) => sum + ((item.mark_iv as number) ?? 0),
-                0,
-              ) / atmStrikes.length
-            : 0;
+        // Deribit raw data has no 'strike' field; parse it from instrument_name
+        const atmIVs: number[] = [];
+        for (const item of bookData) {
+          const name = String(item.instrument_name ?? '');
+          const parts = name.split('-');
+          const strike = parseInt(parts[2] ?? '0', 10);
+          const iv = (item.mark_iv as number) ?? 0;
+          if (strike >= btcPrice * 0.98 && strike <= btcPrice * 1.02 && iv > 0) {
+            atmIVs.push(iv);
+          }
+        }
+        const atmIV = atmIVs.length > 0
+          ? atmIVs.reduce((sum, iv) => sum + iv, 0) / atmIVs.length
+          : 0;
 
         return MarketOverviewSchema.parse({
           totalOI,
@@ -90,25 +94,44 @@ export class TrpcService {
             input.currency,
             input.kind,
           );
-          return data.map((item) =>
-            OptionSummarySchema.parse({
-              instrument_name: item.instrument_name as string,
-              strike: item.strike as number,
-              expiry: String(item.expiration),
-              option_type: String(item.instrument_name).slice(-1),
-              open_interest: item.open_interest as number,
-              open_interest_usd:
-                (item.open_interest_usd as number) ??
-                (item.open_interest as number) *
-                  ((item.underlying_price as number) ?? 0) *
-                  0.001,
-              volume_24h: (item.volume as number) ?? 0,
-              mark_iv: item.mark_iv as number,
-              bid_iv: item.bid_iv as number,
-              ask_iv: item.ask_iv as number,
-              underlying_price: item.underlying_price as number,
-            }),
-          );
+          return data.map((item) => {
+            const underlyingPrice = (item.underlying_price as number) ?? 0;
+            const openInterest = (item.open_interest as number) ?? 0;
+            const volumeUSD = (item.volume_usd as number) ?? 0;
+
+            // Parse instrument_name: BTC-18MAY26-73000-P
+            const name = String(item.instrument_name);
+            const parts = name.split('-');
+            const strike = parseInt(parts[2] ?? '0', 10);
+            const optionType = parts[3] ?? '';
+
+            // Parse expiry from instrument name (e.g., 18MAY26 -> 2026-05-18 08:00 UTC)
+            const expiryStr = parts[1] ?? '';
+            const day = parseInt(expiryStr.slice(0, 2), 10);
+            const monthStr = expiryStr.slice(2, 5);
+            const yearShort = parseInt(expiryStr.slice(5), 10);
+            const year = 2000 + yearShort;
+            const months: Record<string, number> = {
+              JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+              JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
+            };
+            const month = months[monthStr] ?? 0;
+            const expiry = new Date(Date.UTC(year, month, day, 8, 0, 0)).toISOString();
+
+            return OptionSummarySchema.parse({
+              instrument_name: name,
+              strike,
+              expiry,
+              option_type: optionType,
+              open_interest: openInterest,
+              open_interest_usd: openInterest * underlyingPrice * 0.001,
+              volume_24h: volumeUSD,
+              mark_iv: (item.mark_iv as number) ?? 0,
+              bid_iv: 0,
+              ask_iv: 0,
+              underlying_price: underlyingPrice,
+            });
+          });
         }),
 
       trades: t.procedure

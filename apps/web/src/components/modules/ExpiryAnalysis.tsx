@@ -6,7 +6,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 function formatUSD(value: number) {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
   if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-  return `$${value.toFixed(0)}K`;
+  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
+  return `$${value.toFixed(0)}`;
 }
 
 export function ExpiryAnalysis() {
@@ -24,7 +25,7 @@ export function ExpiryAnalysis() {
     }
     return Array.from(byExpiry.entries())
       .map(([expiry, v]) => ({
-        expiry: new Date(Number(expiry)).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
+        expiry: new Date(expiry).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
         call: v.call, put: v.put, total: v.total,
       }))
       .sort((a, b) => a.total - b.total);
@@ -65,7 +66,7 @@ export function ExpiryAnalysis() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis type="number" stroke="#94a3b8" fontSize={12} tickFormatter={(v) => formatUSD(v)} />
               <YAxis dataKey="expiry" type="category" stroke="#94a3b8" fontSize={12} width={70} />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => formatUSD(v)} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => formatUSD(v as number)} />
               <Legend />
               <Bar dataKey="call" name="Call OI" stackId="a" fill="#4ade80" radius={[0, 2, 2, 0]} />
               <Bar dataKey="put" name="Put OI" stackId="a" fill="#e94560" radius={[0, 2, 2, 0]} />
@@ -79,7 +80,7 @@ export function ExpiryAnalysis() {
           <CardTitle className="text-base">行权价分布</CardTitle>
           <select className="rounded border border-border bg-card px-3 py-1 text-sm text-foreground" value={selectedExpiry} onChange={(e) => setSelectedExpiry(e.target.value)}>
             {expiryOptions.map((exp) => (
-              <option key={exp} value={exp}>{new Date(Number(exp)).toLocaleDateString('zh-CN')}</option>
+              <option key={exp} value={exp}>{new Date(exp).toLocaleDateString('zh-CN')}</option>
             ))}
           </select>
         </CardHeader>
@@ -89,7 +90,7 @@ export function ExpiryAnalysis() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="strike" stroke="#94a3b8" fontSize={11} />
               <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => formatUSD(v)} />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => formatUSD(v)} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => formatUSD(v as number)} />
               <Legend />
               <Bar dataKey="call" name="Call OI" fill="#4ade80" />
               <Bar dataKey="put" name="Put OI" fill="#e94560" />

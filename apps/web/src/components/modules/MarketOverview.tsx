@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 function formatUSD(value: number) {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
   if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
   return `$${value.toFixed(0)}`;
 }
 
@@ -29,11 +30,11 @@ export function MarketOverview() {
       map.set(expiry, existing);
     }
     return Array.from(map.entries())
+      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
       .map(([expiry, { call, put }]) => ({
-        expiry: new Date(Number(expiry)).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
+        expiry: new Date(expiry).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
         call, put,
-      }))
-      .sort((a, b) => new Date(a.expiry).getTime() - new Date(b.expiry).getTime());
+      }));
   }, [bookData]);
 
   if (isLoading) {
@@ -63,7 +64,7 @@ export function MarketOverview() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="expiry" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => formatUSD(v)} />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(value: number) => formatUSD(value)} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(value: unknown) => formatUSD(value as number)} />
               <Legend />
               <Bar dataKey="call" name="Call" fill="#4ade80" radius={[2, 2, 0, 0]} />
               <Bar dataKey="put" name="Put" fill="#e94560" radius={[2, 2, 0, 0]} />

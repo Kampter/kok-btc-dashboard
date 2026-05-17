@@ -28,8 +28,8 @@ export function PositionStructure() {
     if (!bookData) return { expiries: [], strikes: [], matrix: [] as number[][] };
     const btcPrice = bookData.find((i) => i.underlying_price > 0)?.underlying_price ?? 100000;
     const filtered = bookData.filter((i) => i.strike >= btcPrice * 0.7 && i.strike <= btcPrice * 1.3);
-    const expiries = Array.from(new Set(filtered.map((i) => i.expiry))).sort();
-    const strikes = Array.from(new Set(filtered.map((i) => i.strike))).sort((a, b) => a - b);
+    const expiries: string[] = Array.from(new Set(filtered.map((i) => i.expiry))).sort();
+    const strikes: number[] = Array.from(new Set(filtered.map((i) => i.strike))).sort((a, b) => a - b);
     const matrix = strikes.map(() => expiries.map(() => 0));
     for (const item of filtered) {
       const eIdx = expiries.indexOf(item.expiry);
@@ -53,7 +53,7 @@ export function PositionStructure() {
                   <Pie data={ratioData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {ratioData.map((entry, index) => (<Cell key={index} fill={entry.color} />))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(value: number) => `$${(value / 1e6).toFixed(2)}M`} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(value: unknown) => `$${((value as number) / 1e6).toFixed(2)}M`} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -75,7 +75,7 @@ export function PositionStructure() {
                 <div className="w-16" />
                 {heatmapData.expiries.map((exp) => (
                   <div key={exp} className="w-20 px-1 text-center text-xs text-muted-foreground">
-                    {new Date(Number(exp)).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+                    {new Date(exp).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
                   </div>
                 ))}
               </div>

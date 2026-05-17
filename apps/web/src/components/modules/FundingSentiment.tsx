@@ -59,7 +59,7 @@ export function FundingSentiment() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" domain={[0, 100]} />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => `${v.toFixed(1)}%`} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(1)}%`} />
               <Line type="monotone" dataKey="ratio" name="P/C 比例" stroke="#f59e0b" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -74,7 +74,7 @@ export function FundingSentiment() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="hour" stroke="#94a3b8" fontSize={10} />
               <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => formatUSD(v)} />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => formatUSD(v)} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => formatUSD(v as number)} />
               <Legend />
               <Bar dataKey="callBuy" name="Call Buy" stackId="a" fill="#4ade80" />
               <Bar dataKey="putBuy" name="Put Buy" stackId="a" fill="#60a5fa" />

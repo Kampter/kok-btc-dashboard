@@ -17,11 +17,11 @@ export class DeribitService {
     return data.result as Array<Record<string, unknown>>;
   }
 
-  async getIndex(currency: string) {
-    const { data } = await this.client.get('/get_index', {
-      params: { currency },
+  async getIndexPrice(indexName: string) {
+    const { data } = await this.client.get('/get_index_price', {
+      params: { index_name: indexName },
     });
-    return data.result as Record<string, number>;
+    return data.result as { index_price: number; estimated_delivery_price: number };
   }
 
   async getHistoricalVolatility(currency: string) {

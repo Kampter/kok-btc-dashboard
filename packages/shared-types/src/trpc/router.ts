@@ -1,5 +1,7 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
+import type { OptionSummary, MarketOverview } from '../schemas/option.js';
+import type { OptionTrade } from '../schemas/trade.js';
 
 const t = initTRPC.create();
 
@@ -12,13 +14,13 @@ export const appRouter = t.router({
         atmIV: 0,
         btcPrice: 0,
         timestamp: new Date().toISOString(),
-      };
+      } as MarketOverview;
     }),
 
     bookSummary: t.procedure
       .input(z.object({ currency: z.string(), kind: z.string() }))
       .query(async ({ input }) => {
-        return [];
+        return [] as OptionSummary[];
       }),
 
     trades: t.procedure
@@ -29,13 +31,13 @@ export const appRouter = t.router({
         })
       )
       .query(async ({ input }) => {
-        return [];
+        return [] as OptionTrade[];
       }),
 
     historicalVolatility: t.procedure
       .input(z.object({ currency: z.string() }))
       .query(async ({ input }) => {
-        return [];
+        return [] as Array<{ timestamp: number; volatility: number }>;
       }),
   }),
 });

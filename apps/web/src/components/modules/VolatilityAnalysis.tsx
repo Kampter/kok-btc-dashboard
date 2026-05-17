@@ -21,7 +21,7 @@ export function VolatilityAnalysis() {
       .map(([expiry, ivs]) => {
         const sorted = ivs.sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
-        const daysToExpiry = Math.ceil((new Date(Number(expiry)).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const daysToExpiry = Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
         return { expiry: `${daysToExpiry}D`, iv: median * 100, daysToExpiry };
       })
       .sort((a, b) => a.daysToExpiry - b.daysToExpiry)
@@ -30,7 +30,7 @@ export function VolatilityAnalysis() {
 
   const skewData = React.useMemo(() => {
     if (!bookData || bookData.length === 0) return [];
-    const nearestExpiry = [...bookData].sort((a, b) => Number(a.expiry) - Number(b.expiry))[0]?.expiry;
+    const nearestExpiry = [...bookData].sort((a, b) => new Date(a.expiry).getTime() - new Date(b.expiry).getTime())[0]?.expiry;
     if (!nearestExpiry) return [];
     const btcPrice = bookData.find((i) => i.underlying_price > 0)?.underlying_price ?? 0;
     if (btcPrice === 0) return [];
@@ -53,9 +53,9 @@ export function VolatilityAnalysis() {
 
   const hvIvData = React.useMemo(() => {
     if (!histVolData) return [];
-    return histVolData.map(([timestamp, vol]) => ({
-      date: new Date(timestamp).toLocaleDateString('zh-CN'),
-      hv: vol * 100,
+    return histVolData.map((item) => ({
+      date: new Date(item.timestamp).toLocaleDateString('zh-CN'),
+      hv: item.volatility * 100,
     }));
   }, [histVolData]);
 
@@ -69,7 +69,7 @@ export function VolatilityAnalysis() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="expiry" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => `${v.toFixed(2)}%`} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
               <Line type="monotone" dataKey="iv" name="ATM IV" stroke="#e94560" strokeWidth={2} dot={{ fill: '#e94560', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -84,7 +84,7 @@ export function VolatilityAnalysis() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="moneyness" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => `${v.toFixed(2)}%`} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
               <Line type="monotone" dataKey="iv" name="IV" stroke="#4ade80" strokeWidth={2} dot={{ fill: '#4ade80', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -99,7 +99,7 @@ export function VolatilityAnalysis() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: number) => `${v.toFixed(2)}%`} />
+              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
               <Legend />
               <Line type="monotone" dataKey="hv" name="历史波动率" stroke="#60a5fa" strokeWidth={2} dot={false} />
             </LineChart>
