@@ -9,6 +9,14 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./schemas": {
+      "import": "./dist/schemas/index.js",
+      "types": "./dist/schemas/index.d.ts"
+    },
+    "./trpc": {
+      "import": "./dist/trpc/router.js",
+      "types": "./dist/trpc/router.d.ts"
     }
   },
   "scripts": {
@@ -16,7 +24,11 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "zod": "^4.4.3",
+    "@trpc/server": "^11.17.0"
+  },
   "devDependencies": {
-    "typescript": "^5.5.0"
+    "typescript": "^6.0.3"
   }
 }

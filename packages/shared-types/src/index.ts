@@ -1,5 +1,2 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+export * from './schemas/index.js';
+export { appRouter, type AppRouter } from './trpc/router.js';
