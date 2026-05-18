@@ -6,7 +6,7 @@ import type { OptionTrade } from '../schemas/trade.js';
 const t = initTRPC.create();
 
 // 此 router 仅用于推导 AppRouter 类型，实际实现在 apps/api/src/trpc/trpc.service.ts
-const _appRouter = t.router({
+export const appRouter = t.router({
   deribit: t.router({
     marketOverview: t.procedure.query(async () => ({} as MarketOverview)),
 
@@ -24,4 +24,4 @@ const _appRouter = t.router({
   }),
 });
 
-export type AppRouter = typeof _appRouter;
+export type AppRouter = typeof appRouter;
