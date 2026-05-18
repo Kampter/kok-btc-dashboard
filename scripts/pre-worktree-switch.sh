@@ -2,7 +2,7 @@
 # Pre-worktree-switch hook: Prevent losing docs/superpowers/ changes
 #
 # Usage: Source this script before switching worktrees:
-#   source .claude/hooks/pre-worktree-switch.sh
+#   source scripts/pre-worktree-switch.sh
 
 set -e
 
