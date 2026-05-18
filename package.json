@@ -8,6 +8,7 @@
     "dev": "pnpm -r --parallel dev",
     "dev:web": "pnpm --filter @kok/web dev",
     "dev:api": "pnpm --filter @kok/api dev",
+    "pretest": "pnpm --filter @kok/shared-types build",
     "test": "vitest",
     "test:run": "vitest --run",
     "test:coverage": "vitest --run --coverage",
