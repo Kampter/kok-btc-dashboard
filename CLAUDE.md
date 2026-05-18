@@ -1,107 +1,82 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Kok 是一个全栈 TypeScript monorepo。前端使用 TanStack Start（SSR），后端使用 NestJS + tRPC。
 
-## Project Overview
+## Monorepo 结构
 
-Kok is a full-stack TypeScript web application built as a pnpm monorepo. The frontend is a React application powered by TanStack Start (SSR-enabled, file-based routing). Backend packages live under `apps/` alongside the web client.
-
-## Monorepo Structure
-
-| Directory | Description |
+| 目录 | 说明 |
 |-----------|-------------|
-| `apps/web/` | React 19 frontend (TanStack Start + Vite). Entry: `app/routes/__root.tsx` |
-| `apps/api/` | NestJS backend. Entry: `src/main.ts` (port 3000) |
-| `packages/shared-types/` | TypeScript API contracts + tRPC router shared across apps |
+| `apps/web/` | React 19 前端（TanStack Start + Vite） |
+| `apps/api/` | NestJS 后端（tRPC + Deribit 代理） |
+| `packages/shared-types/` | Zod schema + tRPC router 共享包 |
 
-## Root-level Commands
+各目录的详细配置和架构决策，见对应子目录下的 `CLAUDE.md`。
 
-```bash
-pnpm install          # Install all dependencies
-pnpm dev              # Start all dev servers in parallel
-pnpm build            # Build all packages/apps
-pnpm test             # Run all tests
-pnpm lint             # Lint all packages
-pnpm typecheck        # Type-check all TypeScript
-```
-
-## App-level Commands
+## 根级命令
 
 ```bash
-# Web frontend (TanStack Start)
-cd apps/web
-pnpm dev              # Vite dev server with SSR (port 5173)
-pnpm build            # Client + SSR build to dist/
-pnpm preview          # Preview production build
-pnpm test             # Vitest
-pnpm typecheck        # tsc --noEmit
-
-# API backend (NestJS)
-cd apps/api
-pnpm dev              # NestJS dev server with hot reload (port 3000)
-pnpm build            # Compile to dist/
-pnpm start            # Run compiled output
+pnpm install          # 安装依赖
+pnpm dev              # 并行启动所有 dev server
+pnpm build            # 构建所有包
+pnpm test             # 运行所有测试（Vitest workspace）
+pnpm test:run         # CI 模式运行测试
+pnpm test:e2e         # Playwright E2E
+pnpm lint             # 全量 lint
+pnpm typecheck        # 全量类型检查
 ```
 
-## Architecture Decisions
+## 开发流程（渐进式 Skill 加载）
 
-### Package Boundaries
+以下不是必须严格执行的流水线，而是根据任务性质 **按需触发** 的技能集合。系统会在合适时机自动加载对应 skill，不需要手动记忆。
 
-`packages/shared-types/` is the source of truth for data contracts. Apps import from it using the workspace protocol (`"@kok/shared-types": "workspace:*"`). When adding new API endpoints or data models, define the types in `packages/shared-types/src/` first, then consume them in the apps.
+### 环境隔离
+- **触发**：任何可能修改现有代码的工作
+- **自动加载**：`superpowers:using-git-worktrees` → 创建独立 worktree，避免污染当前工作区
 
-### TypeScript Project References
+### 需求探索与设计
+- **触发**：需求不清晰、涉及新功能、需要架构决策
+- **自动加载**：`superpowers:brainstorming` → 产出设计文档到 `docs/superpowers/specs/YYYY-MM-DD-feature-name.md`
 
-Apps use composite project references (`tsconfig.json`) so that `tsc --build` can efficiently check the monorepo. If you add a new package that is imported by an app, wire it into `references` in the app's `tsconfig.json`.
+### 制定实施计划
+- **触发**：需求已明确，涉及多步骤修改
+- **自动加载**：`superpowers:writing-plans` → 产出实施计划到 `docs/superpowers/plans/YYYY-MM-DD-feature-name.md`
 
-### TanStack Start + Vite
+### 测试驱动开发
+- **触发**：实施功能或修复 bug
+- **自动加载**：`superpowers:test-driven-development` → 先写测试，再写实现（Red-Green-Refactor）
 
-The frontend uses TanStack Start with the Vite plugin (`@tanstack/react-start/plugin/vite`). It provides:
-- File-based routing (`app/routes/`)
-- SSR with streaming
-- Automatic route tree generation (`app/routeTree.gen.ts`)
+### 系统调试
+- **触发**：测试失败、行为不符合预期
+- **自动加载**：`superpowers:systematic-debugging`
 
-TanStack Start uses Vite as the underlying build tool. Do not confuse this with a plain Vite SPA — SSR is enabled by default.
+### 并行开发
+- **触发**：有 2+ 可并行的独立任务
+- **自动加载**：`superpowers:dispatching-parallel-agents`
 
-### NestJS + tRPC Backend
+### 计划实施
+- **触发**：计划已制定，需要按任务逐步执行
+- **自动加载**：`superpowers:subagent-driven-development` 或 `superpowers:executing-plans`
 
-The backend uses NestJS with a tRPC router exposed via `@trpc/server/adapters/express`. All Deribit API calls go through the backend with a 30-second in-memory cache (`@nestjs/cache-manager`).
+### 完成验证
+- **触发**：声称工作完成前
+- **自动加载**：`superpowers:verification-before-completion`
 
-### UI Stack
+### 代码审查
+- **触发**：提交 PR 前或收到 review 反馈
+- **自动加载**：`superpowers:requesting-code-review` / `superpowers:receiving-code-review`
+- **对照检查**：review 时去 `docs/superpowers/` 下的 specs 和 plans 逐项核对功能是否开发全面
 
-- **Components**: shadcn/ui v4 with Radix UI primitives
-- **Styling**: Tailwind CSS v4 (uses `@import "tailwindcss"` and `@theme` syntax)
-- **Charts**: Recharts (directly, not through Tremor)
-- **Data fetching**: tRPC client + TanStack Query
+### 分支收尾
+- **触发**：实现完成、测试全部通过
+- **自动加载**：`superpowers:finishing-a-development-branch`
 
-### Frontend File Structure
+## GitHub 操作
 
-```
-apps/web/
-├── app/
-│   ├── routes/
-│   │   ├── __root.tsx       # Root layout (dark theme, global providers)
-│   │   └── index.tsx        # Dashboard page
-│   ├── components/
-│   │   ├── ui/              # shadcn/ui components (card, tabs, etc.)
-│   │   ├── metrics/         # KPI cards
-│   │   └── modules/         # 5 dashboard modules
-│   ├── hooks/               # tRPC data hooks
-│   ├── lib/                 # utils, trpc client
-│   ├── router.tsx           # Router factory
-│   ├── routeTree.gen.ts     # Auto-generated route tree
-│   └── globals.css          # Tailwind v4 theme variables
-├── vite.config.ts           # Vite + TanStack Start plugin
-├── index.html               # HTML entry
-└── components.json          # shadcn/ui configuration
-```
+所有 GitHub 操作（创建 PR、查看 issue、检查 checks 等）默认使用 GitHub CLI (`gh`)。
 
-## GitHub Operations
+## 语言要求
 
-All GitHub operations (creating pull requests, viewing issues, checking checks, etc.) must use the GitHub CLI (`gh`) by default instead of the Web API or web interface.
-
-## Language Requirements
-
-All documentation, comments, and user-facing text output must be written in Chinese (中文). Code identifiers, technical terms, and file paths remain in English, but all explanations, instructions, and prose should be in Chinese.
+所有文档、注释、用户可见文本使用中文。代码标识符、技术术语、文件路径保持英文。
 
 ## Documentation Safety Rules
 
@@ -138,3 +113,9 @@ source scripts/pre-worktree-switch.sh
 # 自动恢复到 docs/superpowers/recovered/
 ./scripts/check-dangling-docs.sh --recover
 ```
+
+## 子目录文档
+
+- [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md) — 前端架构、UI Stack、文件结构
+- [`apps/api/CLAUDE.md`](apps/api/CLAUDE.md) — 后端架构、NestJS 模块、API 设计
+- [`packages/shared-types/CLAUDE.md`](packages/shared-types/CLAUDE.md) — 共享类型、包边界、Schema 规范
