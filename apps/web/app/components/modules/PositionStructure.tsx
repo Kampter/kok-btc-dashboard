@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { useBookSummary } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ErrorFallback } from '../ui/error-fallback';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const CALL_COLOR = '#4ade80';
 const PUT_COLOR = '#e94560';
 
 export function PositionStructure() {
-  const { data: bookData } = useBookSummary('BTC', 'option');
+  const { data: bookData, isLoading, isError, refetch } = useBookSummary('BTC', 'option');
 
   const ratioData = React.useMemo(() => {
     if (!bookData) return [];
@@ -47,6 +48,20 @@ export function PositionStructure() {
     const all = [...heatmapData.callMatrix.flat(), ...heatmapData.putMatrix.flat()];
     return all.length > 0 ? Math.max(...all) : 1;
   }, [heatmapData]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Card key={i} className="animate-pulse"><CardContent className="h-64" /></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <ErrorFallback title="持仓结构数据加载失败" onRetry={() => refetch()} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -94,7 +109,6 @@ export function PositionStructure() {
                     const totalOi = callOi + putOi;
                     const intensity = Math.min(totalOi / maxOI, 1);
                     const callRatio = totalOi > 0 ? callOi / totalOi : 0.5;
-                    // 混合 Call 绿色 (#4ade80) 和 Put 红色 (#e94560)
                     const r = Math.round(74 * callRatio + 233 * (1 - callRatio));
                     const g = Math.round(222 * callRatio + 69 * (1 - callRatio));
                     const b = Math.round(128 * callRatio + 96 * (1 - callRatio));

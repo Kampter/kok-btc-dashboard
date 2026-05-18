@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useBookSummary } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ErrorFallback } from '../ui/error-fallback';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function formatUSD(value: number) {
@@ -11,7 +12,7 @@ function formatUSD(value: number) {
 }
 
 export function ExpiryAnalysis() {
-  const { data: bookData } = useBookSummary('BTC', 'option');
+  const { data: bookData, isLoading, isError, refetch } = useBookSummary('BTC', 'option');
 
   const expiryData = React.useMemo(() => {
     if (!bookData) return [];
@@ -55,6 +56,20 @@ export function ExpiryAnalysis() {
       .map(([strike, v]) => ({ strike: `$${(strike / 1000).toFixed(0)}K`, rawStrike: strike, call: v.call, put: v.put }))
       .sort((a, b) => a.rawStrike - b.rawStrike);
   }, [bookData, selectedExpiry]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Card key={i} className="animate-pulse"><CardContent className="h-64" /></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <ErrorFallback title="到期分析数据加载失败" onRetry={() => refetch()} />;
+  }
 
   return (
     <div className="space-y-6">

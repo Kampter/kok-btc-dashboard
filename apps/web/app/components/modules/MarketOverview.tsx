@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useMarketOverview, useBookSummary } from '../../hooks/useDashboardData';
 import { KPICard } from '../metrics/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ErrorFallback } from '../ui/error-fallback';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function formatUSD(value: number) {
@@ -16,7 +17,7 @@ function formatPercent(value: number) {
 }
 
 export function MarketOverview() {
-  const { data: overview, isLoading } = useMarketOverview();
+  const { data: overview, isLoading, isError, refetch } = useMarketOverview();
   const { data: bookData } = useBookSummary('BTC', 'option');
 
   const volumeByExpiry = React.useMemo(() => {
@@ -39,12 +40,19 @@ export function MarketOverview() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="animate-pulse"><CardContent className="h-24" /></Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="animate-pulse"><CardContent className="h-24" /></Card>
+          ))}
+        </div>
+        <Card className="animate-pulse"><CardContent className="h-64" /></Card>
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorFallback title="市场概况数据加载失败" onRetry={() => refetch()} />;
   }
 
   return (

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTrades } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ErrorFallback } from '../ui/error-fallback';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 function formatUSD(value: number) {
@@ -10,7 +11,7 @@ function formatUSD(value: number) {
 }
 
 export function FundingSentiment() {
-  const { data: trades } = useTrades('BTC', 500);
+  const { data: trades, isLoading, isError, refetch } = useTrades('BTC', 500);
 
   const flowData = React.useMemo(() => {
     if (!trades) return [];
@@ -18,7 +19,7 @@ export function FundingSentiment() {
     for (const trade of trades) {
       const hour = new Date(trade.timestamp).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit' });
       const existing = byHour.get(hour) ?? { callBuy: 0, callSell: 0, putBuy: 0, putSell: 0 };
-      const isCall = trade.instrument_name.endsWith('-C');
+      const isCall = trade.option_type === 'C';
       const notional = trade.amount * trade.price;
       if (trade.direction === 'buy') { if (isCall) existing.callBuy += notional; else existing.putBuy += notional; }
       else { if (isCall) existing.callSell += notional; else existing.putSell += notional; }
@@ -34,7 +35,7 @@ export function FundingSentiment() {
       const day = new Date(trade.timestamp).toLocaleDateString('zh-CN');
       const existing = byDay.get(day) ?? { put: 0, call: 0 };
       const notional = trade.amount * trade.price;
-      if (trade.instrument_name.endsWith('-C')) existing.call += notional;
+      if (trade.option_type === 'C') existing.call += notional;
       else existing.put += notional;
       byDay.set(day, existing);
     }
@@ -48,6 +49,20 @@ export function FundingSentiment() {
     if (!trades) return [];
     return trades.map((t) => ({ ...t, notional: t.amount * t.price })).filter((t) => t.notional >= 1e6).sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
   }, [trades]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="animate-pulse"><CardContent className="h-48" /></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <ErrorFallback title="资金情绪数据加载失败" onRetry={() => refetch()} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -102,7 +117,7 @@ export function FundingSentiment() {
                   <tr key={trade.trade_id} className="border-b border-border/50">
                     <td className="py-2">{new Date(trade.timestamp).toLocaleTimeString('zh-CN')}</td>
                     <td className="py-2"><span className={trade.direction === 'buy' ? 'text-call' : 'text-put'}>{trade.direction === 'buy' ? '买入' : '卖出'}</span></td>
-                    <td className="py-2">{trade.instrument_name.endsWith('-C') ? 'Call' : 'Put'}</td>
+                    <td className="py-2">{trade.option_type === 'C' ? 'Call' : 'Put'}</td>
                     <td className="py-2 text-right">{formatUSD(trade.notional)}</td>
                     <td className="py-2 text-muted-foreground">{trade.instrument_name}</td>
                   </tr>

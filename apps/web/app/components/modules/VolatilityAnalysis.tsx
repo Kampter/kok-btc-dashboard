@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useBookSummary, useHistoricalVolatility } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ErrorFallback } from '../ui/error-fallback';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function VolatilityAnalysis() {
-  const { data: bookData } = useBookSummary('BTC', 'option');
-  const { data: histVolData } = useHistoricalVolatility('BTC');
+  const { data: bookData, isLoading: bookLoading, isError: bookError, refetch: refetchBook } = useBookSummary('BTC', 'option');
+  const { data: histVolData, isLoading: hvLoading, isError: hvError, refetch: refetchHv } = useHistoricalVolatility('BTC');
 
   const termStructure = React.useMemo(() => {
     if (!bookData) return [];
@@ -58,6 +59,24 @@ export function VolatilityAnalysis() {
       hv: item.volatility * 100,
     }));
   }, [histVolData]);
+
+  if (bookLoading || hvLoading) {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="animate-pulse"><CardContent className="h-64" /></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (bookError) {
+    return <ErrorFallback title="波动率分析数据加载失败" onRetry={() => refetchBook()} />;
+  }
+
+  if (hvError) {
+    return <ErrorFallback title="历史波动率数据加载失败" onRetry={() => refetchHv()} />;
+  }
 
   return (
     <div className="space-y-6">

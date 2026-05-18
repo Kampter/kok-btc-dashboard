@@ -2,42 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { DeribitService } from '../deribit/deribit.service';
+import {
+  MarketOverviewSchema,
+  OptionSummarySchema,
+  OptionTradeSchema,
+  parseInstrumentName,
+  getOptionTypeFromInstrumentName,
+} from '@kok/shared-types';
 
 const t = initTRPC.create();
-
-// 内联定义 Zod schemas（避免 CommonJS/ESM 互操作问题）
-// 必须与 packages/shared-types/src/schemas/* 保持完全一致
-const MarketOverviewSchema = z.object({
-  totalOI: z.number(),
-  totalVolume24h: z.number(),
-  atmIV: z.number(),
-  btcPrice: z.number(),
-  timestamp: z.string(),
-});
-
-const OptionSummarySchema = z.object({
-  instrument_name: z.string(),
-  strike: z.number(),
-  expiry: z.string(),
-  option_type: z.enum(['C', 'P']),
-  open_interest: z.number(),
-  open_interest_usd: z.number(),
-  volume_24h: z.number(),
-  mark_iv: z.number(),
-  bid_iv: z.number(),
-  ask_iv: z.number(),
-  underlying_price: z.number(),
-});
-
-const OptionTradeSchema = z.object({
-  trade_id: z.string(),
-  timestamp: z.number(),
-  instrument_name: z.string(),
-  direction: z.enum(['buy', 'sell']),
-  amount: z.number(),
-  price: z.number(),
-  index_price: z.number(),
-});
 
 @Injectable()
 export class TrpcService {
@@ -68,8 +41,7 @@ export class TrpcService {
           const atmIVs: number[] = [];
           for (const item of bookData) {
             const name = String(item.instrument_name ?? '');
-            const parts = name.split('-');
-            const strike = parseInt(parts[2] ?? '0', 10);
+            const { strike } = parseInstrumentName(name);
             const iv = (item.mark_iv as number) ?? 0;
             if (strike >= btcPrice * 0.98 && strike <= btcPrice * 1.02 && iv > 0) {
               atmIVs.push(iv);
@@ -108,39 +80,14 @@ export class TrpcService {
               const openInterest = (item.open_interest as number) ?? 0;
               const volumeUSD = (item.volume_usd as number) ?? 0;
 
-              // Parse instrument_name: BTC-18MAY26-73000-P
               const name = String(item.instrument_name);
-              const parts = name.split('-');
-              const strike = parseInt(parts[2] ?? '0', 10);
-              const optionType = parts[3] ?? '';
-
-              if (!name || parts.length < 4 || !optionType) {
-                throw new Error(`Invalid instrument_name format: ${name}`);
-              }
-
-              // Parse expiry from instrument name (e.g., 18MAY26 -> 2026-05-18 08:00 UTC)
-              const expiryStr = parts[1] ?? '';
-              const day = parseInt(expiryStr.slice(0, 2), 10);
-              const monthStr = expiryStr.slice(2, 5);
-              const yearShort = parseInt(expiryStr.slice(5), 10);
-              const year = 2000 + yearShort;
-              const months: Record<string, number> = {
-                JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
-                JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
-              };
-              const month = months[monthStr] ?? 0;
-
-              if (isNaN(day) || isNaN(year) || !months[monthStr]) {
-                throw new Error(`Invalid expiry format in instrument_name: ${name}`);
-              }
-
-              const expiry = new Date(Date.UTC(year, month, day, 8, 0, 0)).toISOString();
+              const parsed = parseInstrumentName(name);
 
               return OptionSummarySchema.parse({
                 instrument_name: name,
-                strike,
-                expiry,
-                option_type: optionType,
+                strike: parsed.strike,
+                expiry: parsed.expiry,
+                option_type: parsed.optionType,
                 open_interest: openInterest,
                 open_interest_usd: openInterest * underlyingPrice * 0.001,
                 volume_24h: volumeUSD,
@@ -173,17 +120,21 @@ export class TrpcService {
               'option',
               input.count,
             );
-            return (data.trades ?? []).map((item) =>
-              OptionTradeSchema.parse({
+            return (data.trades ?? []).map((item) => {
+              const instrumentName = String(item.instrument_name ?? '');
+              const optionType = getOptionTypeFromInstrumentName(instrumentName);
+
+              return OptionTradeSchema.parse({
                 trade_id: String(item.trade_id ?? ''),
                 timestamp: item.timestamp as number,
-                instrument_name: item.instrument_name as string,
+                instrument_name: instrumentName,
+                option_type: optionType,
                 direction: item.direction as 'buy' | 'sell',
                 amount: item.amount as number,
                 price: item.price as number,
                 index_price: item.index_price as number,
-              }),
-            );
+              });
+            });
           } catch (error) {
             throw new TRPCError({
               code: 'INTERNAL_SERVER_ERROR',
