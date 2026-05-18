@@ -18,9 +18,9 @@ vi.mock('@nestjs/cache-manager', () => ({
 
 describe('DeribitService edge cases', () => {
   let service: DeribitService
-  const mockCacheManager: Pick<Cache, 'get' | 'set'> = {
-    get: vi.fn(),
-    set: vi.fn(),
+  const mockCacheManager = {
+    get: vi.fn<Cache['get']>(),
+    set: vi.fn<Cache['set']>(),
   }
 
   beforeEach(() => {
