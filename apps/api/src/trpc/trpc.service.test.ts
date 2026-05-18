@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { describe, it, expect, vi } from 'vitest'
+import { TRPCError } from '@trpc/server'
 import { TrpcService } from './trpc.service'
 import { DeribitService } from '../deribit/deribit.service'
 import { rawBookSummaryBTC, rawIndexPriceBTC, rawHistoricalVolatilityBTC, rawTradesBTC } from '@kok/shared-types/fixtures'
@@ -85,6 +86,56 @@ describe('TrpcService', () => {
       const result = await caller.deribit.historicalVolatility({ currency: 'BTC' })
       expect(result).toHaveLength(7)
       expect(result[0]).toEqual({ timestamp: 1747468800000, volatility: 55.32 })
+    })
+  })
+
+  describe('error handling', () => {
+    it('all procedures throw TRPCError on DeribitService failure', async () => {
+      const { caller, deribitService } = await createCaller()
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockRejectedValue(new Error('Service down'))
+      vi.mocked(deribitService.getIndexPrice).mockRejectedValue(new Error('Service down'))
+
+      await expect(caller.deribit.marketOverview()).rejects.toThrow(TRPCError)
+    })
+
+    it('marketOverview handles zero btcPrice', async () => {
+      const { caller, deribitService } = await createCaller()
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC as any)
+      vi.mocked(deribitService.getIndexPrice).mockResolvedValue({ index_price: 0, estimated_delivery_price: 0 } as any)
+
+      const result = await caller.deribit.marketOverview()
+
+      expect(result.btcPrice).toBe(0)
+      expect(result.totalOI).toBe(0)
+      expect(result.totalVolume24h).toBe(0)
+      expect(result.atmIV).toBe(0)
+    })
+
+    it('bookSummary handles empty data array', async () => {
+      const { caller, deribitService } = await createCaller()
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue([] as any)
+
+      const result = await caller.deribit.bookSummary({ currency: 'BTC', kind: 'option' })
+
+      expect(result).toEqual([])
+    })
+
+    it('trades handles empty trades array', async () => {
+      const { caller, deribitService } = await createCaller()
+      vi.mocked(deribitService.getLastTradesByCurrency).mockResolvedValue({ trades: [] } as any)
+
+      const result = await caller.deribit.trades({ currency: 'BTC', count: 10 })
+
+      expect(result).toEqual([])
+    })
+
+    it('historicalVolatility handles empty data', async () => {
+      const { caller, deribitService } = await createCaller()
+      vi.mocked(deribitService.getHistoricalVolatility).mockResolvedValue([] as any)
+
+      const result = await caller.deribit.historicalVolatility({ currency: 'BTC' })
+
+      expect(result).toEqual([])
     })
   })
 })
