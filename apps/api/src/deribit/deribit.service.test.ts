@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Cache } from 'cache-manager'
 import { DeribitService } from './deribit.service'
 import { rawBookSummaryBTC, rawIndexPriceBTC, rawHistoricalVolatilityBTC, rawTradesBTC } from '@kok/shared-types/fixtures'
 
@@ -17,7 +18,7 @@ vi.mock('@nestjs/cache-manager', () => ({
 
 describe('DeribitService', () => {
   let service: DeribitService
-  const mockCacheManager = {
+  const mockCacheManager: Pick<Cache, 'get' | 'set'> = {
     get: vi.fn(),
     set: vi.fn(),
   }
@@ -26,7 +27,7 @@ describe('DeribitService', () => {
     vi.clearAllMocks()
     mockCacheManager.get.mockResolvedValue(undefined)
     mockCacheManager.set.mockResolvedValue(undefined)
-    service = new DeribitService(mockCacheManager as any)
+    service = new DeribitService(mockCacheManager as Cache)
   })
 
   describe('getBookSummaryByCurrency', () => {
@@ -48,12 +49,14 @@ describe('DeribitService', () => {
 
   describe('getIndexPrice', () => {
     it('returns index price data', async () => {
-      mockGet.mockResolvedValueOnce({ data: { result: rawIndexPriceBTC } })
+      // Deribit API returns { "btc_usd": 89950.5 }
+      mockGet.mockResolvedValueOnce({ data: { result: { btc_usd: 89950.5 } } })
       const result = await service.getIndexPrice('btc_usd')
-      expect(mockGet).toHaveBeenCalledWith('/get_index_price', {
+      expect(mockGet).toHaveBeenCalledWith('/get_index', {
         params: { index_name: 'btc_usd' },
       })
       expect(result.index_price).toBe(89950.5)
+      expect(result.estimated_delivery_price).toBe(89950.5)
     })
   })
 

@@ -33,8 +33,8 @@ describe('TrpcService', () => {
   describe('marketOverview', () => {
     it('aggregates book data and index price', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC as any)
-      vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC as any)
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC)
+      vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC)
       const result = await caller.deribit.marketOverview()
       expect(result.btcPrice).toBe(89950.5)
       expect(result.totalOI).toBeGreaterThan(0)
@@ -47,8 +47,8 @@ describe('TrpcService', () => {
       const { caller, deribitService } = await createCaller()
       vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue([
         { ...rawBookSummaryBTC[0], instrument_name: 'BTC-30MAY26-50000-C', mark_iv: 70 },
-      ] as any)
-      vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC as any)
+      ])
+      vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC)
       const result = await caller.deribit.marketOverview()
       expect(result.atmIV).toBe(0)
     })
@@ -57,7 +57,7 @@ describe('TrpcService', () => {
   describe('bookSummary', () => {
     it('transforms raw Deribit data to OptionSummary schema', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC as any)
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC)
       const result = await caller.deribit.bookSummary({ currency: 'BTC', kind: 'option' })
       expect(result).toHaveLength(4)
       expect(result[0]).toMatchObject({
@@ -72,7 +72,7 @@ describe('TrpcService', () => {
   describe('trades', () => {
     it('returns transformed trades', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getLastTradesByCurrency).mockResolvedValue(rawTradesBTC as any)
+      vi.mocked(deribitService.getLastTradesByCurrency).mockResolvedValue(rawTradesBTC)
       const result = await caller.deribit.trades({ currency: 'BTC', count: 10 })
       expect(result).toHaveLength(3)
       expect(result[0]).toMatchObject({ trade_id: 't-001', direction: 'buy' })
@@ -82,7 +82,7 @@ describe('TrpcService', () => {
   describe('historicalVolatility', () => {
     it('returns {timestamp, volatility} pairs', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getHistoricalVolatility).mockResolvedValue(rawHistoricalVolatilityBTC as any)
+      vi.mocked(deribitService.getHistoricalVolatility).mockResolvedValue(rawHistoricalVolatilityBTC)
       const result = await caller.deribit.historicalVolatility({ currency: 'BTC' })
       expect(result).toHaveLength(7)
       expect(result[0]).toEqual({ timestamp: 1747468800000, volatility: 55.32 })
@@ -100,8 +100,8 @@ describe('TrpcService', () => {
 
     it('marketOverview handles zero btcPrice', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC as any)
-      vi.mocked(deribitService.getIndexPrice).mockResolvedValue({ index_price: 0, estimated_delivery_price: 0 } as any)
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC)
+      vi.mocked(deribitService.getIndexPrice).mockResolvedValue({ index_price: 0, estimated_delivery_price: 0 })
 
       const result = await caller.deribit.marketOverview()
 
@@ -113,7 +113,7 @@ describe('TrpcService', () => {
 
     it('bookSummary handles empty data array', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue([] as any)
+      vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue([])
 
       const result = await caller.deribit.bookSummary({ currency: 'BTC', kind: 'option' })
 
@@ -122,7 +122,7 @@ describe('TrpcService', () => {
 
     it('trades handles empty trades array', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getLastTradesByCurrency).mockResolvedValue({ trades: [] } as any)
+      vi.mocked(deribitService.getLastTradesByCurrency).mockResolvedValue({ trades: [] })
 
       const result = await caller.deribit.trades({ currency: 'BTC', count: 10 })
 
@@ -131,7 +131,7 @@ describe('TrpcService', () => {
 
     it('historicalVolatility handles empty data', async () => {
       const { caller, deribitService } = await createCaller()
-      vi.mocked(deribitService.getHistoricalVolatility).mockResolvedValue([] as any)
+      vi.mocked(deribitService.getHistoricalVolatility).mockResolvedValue([])
 
       const result = await caller.deribit.historicalVolatility({ currency: 'BTC' })
 

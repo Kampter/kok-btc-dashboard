@@ -26,7 +26,7 @@ describe('DeribitController', () => {
 
   it('returns book summary via GET', async () => {
     const { controller, deribitService } = await createController()
-    vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC as any)
+    vi.mocked(deribitService.getBookSummaryByCurrency).mockResolvedValue(rawBookSummaryBTC)
 
     const result = await controller.getBookSummary('BTC', 'option')
 
@@ -36,7 +36,7 @@ describe('DeribitController', () => {
 
   it('returns index price via GET', async () => {
     const { controller, deribitService } = await createController()
-    vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC as any)
+    vi.mocked(deribitService.getIndexPrice).mockResolvedValue(rawIndexPriceBTC)
 
     const result = await controller.getIndexPrice('btc_usd')
 
