@@ -5,41 +5,23 @@ import type { OptionTrade } from '../schemas/trade.js';
 
 const t = initTRPC.create();
 
-export const appRouter = t.router({
+// 此 router 仅用于推导 AppRouter 类型，实际实现在 apps/api/src/trpc/trpc.service.ts
+const _appRouter = t.router({
   deribit: t.router({
-    marketOverview: t.procedure.query(async () => {
-      return {
-        totalOI: 0,
-        totalVolume24h: 0,
-        atmIV: 0,
-        btcPrice: 0,
-        timestamp: new Date().toISOString(),
-      } as MarketOverview;
-    }),
+    marketOverview: t.procedure.query(async () => ({} as MarketOverview)),
 
     bookSummary: t.procedure
       .input(z.object({ currency: z.string(), kind: z.string() }))
-      .query(async ({ input }) => {
-        return [] as OptionSummary[];
-      }),
+      .query(async () => [] as OptionSummary[]),
 
     trades: t.procedure
-      .input(
-        z.object({
-          currency: z.string(),
-          count: z.number().default(100),
-        })
-      )
-      .query(async ({ input }) => {
-        return [] as OptionTrade[];
-      }),
+      .input(z.object({ currency: z.string(), count: z.number().default(100) }))
+      .query(async () => [] as OptionTrade[]),
 
     historicalVolatility: t.procedure
       .input(z.object({ currency: z.string() }))
-      .query(async ({ input }) => {
-        return [] as Array<{ timestamp: number; volatility: number }>;
-      }),
+      .query(async () => [] as Array<{ timestamp: number; volatility: number }>),
   }),
 });
 
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof _appRouter;

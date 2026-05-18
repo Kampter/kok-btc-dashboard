@@ -28,12 +28,15 @@ export function parseInstrumentName(name: string): ParsedInstrument {
     throw new Error(`Invalid instrument_name format: ${name}`);
   }
 
-  // Parse expiry: 18MAY26 -> 2026-05-18 08:00 UTC (Deribit 默认到期时间)
-  const day = parseInt(expiryStr.slice(0, 2), 10);
-  const monthStr = expiryStr.slice(2, 5);
-  const yearShort = parseInt(expiryStr.slice(5), 10);
-  const year = 2000 + yearShort;
-  const month = MONTHS[monthStr];
+  // Parse expiry: 18MAY26 or 1MAY26 -> 2026-05-18 08:00 UTC (Deribit 默认到期时间)
+  const match = expiryStr.match(/^(\d{1,2})([A-Z]{3})(\d{2})$/);
+  if (!match) {
+    throw new Error(`Invalid expiry format in instrument_name: ${name}`);
+  }
+  const [, dayStr, monthStr, yearStr] = match;
+  const day = parseInt(dayStr!, 10);
+  const year = 2000 + parseInt(yearStr!, 10);
+  const month = MONTHS[monthStr!];
 
   if (isNaN(day) || isNaN(year) || month === undefined) {
     throw new Error(`Invalid expiry format in instrument_name: ${name}`);

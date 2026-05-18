@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { MarketOverview } from './modules/MarketOverview';
-import { VolatilityAnalysis } from './modules/VolatilityAnalysis';
-import { PositionStructure } from './modules/PositionStructure';
-import { FundingSentiment } from './modules/FundingSentiment';
-import { ExpiryAnalysis } from './modules/ExpiryAnalysis';
+import { useState, memo } from 'react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
+import { MarketOverview } from './modules/MarketOverview'
+import { VolatilityAnalysis } from './modules/VolatilityAnalysis'
+import { PositionStructure } from './modules/PositionStructure'
+import { FundingSentiment } from './modules/FundingSentiment'
+import { ExpiryAnalysis } from './modules/ExpiryAnalysis'
 
 const MODULES = [
   { id: 'overview', label: '市场概况' },
@@ -12,12 +12,18 @@ const MODULES = [
   { id: 'positions', label: '持仓结构' },
   { id: 'sentiment', label: '资金情绪' },
   { id: 'expiry', label: '到期分析' },
-] as const;
+] as const
 
-type ModuleId = (typeof MODULES)[number]['id'];
+type ModuleId = (typeof MODULES)[number]['id']
+
+const MemoMarketOverview = memo(MarketOverview)
+const MemoVolatilityAnalysis = memo(VolatilityAnalysis)
+const MemoPositionStructure = memo(PositionStructure)
+const MemoFundingSentiment = memo(FundingSentiment)
+const MemoExpiryAnalysis = memo(ExpiryAnalysis)
 
 export function DashboardLayout() {
-  const [activeTab, setActiveTab] = useState<ModuleId>('overview');
+  const [activeTab, setActiveTab] = useState<ModuleId>('overview')
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,22 +53,22 @@ export function DashboardLayout() {
           </TabsList>
 
           <TabsContent value="overview">
-            <MarketOverview />
+            <MemoMarketOverview />
           </TabsContent>
           <TabsContent value="volatility">
-            <VolatilityAnalysis />
+            <MemoVolatilityAnalysis />
           </TabsContent>
           <TabsContent value="positions">
-            <PositionStructure />
+            <MemoPositionStructure />
           </TabsContent>
           <TabsContent value="sentiment">
-            <FundingSentiment />
+            <MemoFundingSentiment />
           </TabsContent>
           <TabsContent value="expiry">
-            <ExpiryAnalysis />
+            <MemoExpiryAnalysis />
           </TabsContent>
         </Tabs>
       </div>
     </div>
-  );
+  )
 }

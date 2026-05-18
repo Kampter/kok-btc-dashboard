@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { DeribitService } from '../deribit/deribit.service';
@@ -11,6 +11,14 @@ import {
 } from '@kok/shared-types';
 
 const t = initTRPC.create();
+
+function handleTrpcError(context: string, error: unknown): never {
+  Logger.error(`${context}: ${error instanceof Error ? error.message : String(error)}`, 'TrpcService');
+  throw new TRPCError({
+    code: 'INTERNAL_SERVER_ERROR',
+    message: context,
+  });
+}
 
 @Injectable()
 export class TrpcService {
@@ -59,11 +67,7 @@ export class TrpcService {
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to fetch market overview data',
-            cause: error,
-          });
+          handleTrpcError('Failed to fetch market overview data', error);
         }
       }),
 
@@ -98,11 +102,7 @@ export class TrpcService {
               });
             });
           } catch (error) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to fetch book summary data',
-              cause: error,
-            });
+            handleTrpcError('Failed to fetch book summary data', error);
           }
         }),
 
@@ -136,11 +136,7 @@ export class TrpcService {
               });
             });
           } catch (error) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to fetch trades data',
-              cause: error,
-            });
+            handleTrpcError('Failed to fetch trades data', error);
           }
         }),
 
@@ -156,11 +152,7 @@ export class TrpcService {
               volatility,
             }));
           } catch (error) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to fetch historical volatility data',
-              cause: error,
-            });
+            handleTrpcError('Failed to fetch historical volatility data', error);
           }
         }),
     }),

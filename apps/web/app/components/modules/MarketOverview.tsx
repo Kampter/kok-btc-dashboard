@@ -3,18 +3,8 @@ import { useMarketOverview, useBookSummary } from '../../hooks/useDashboardData'
 import { KPICard } from '../metrics/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorFallback } from '../ui/error-fallback';
+import { formatUSD, formatPercent } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-function formatUSD(value: number) {
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
-  return `$${value.toFixed(0)}`;
-}
-
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`;
-}
 
 export function MarketOverview() {
   const { data: overview, isLoading, isError, refetch } = useMarketOverview();
@@ -58,10 +48,10 @@ export function MarketOverview() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KPICard title="总持仓量 (OI)" value={overview ? formatUSD(overview.totalOI) : '-'} change="+2.3% 24h" changeType="positive" />
-        <KPICard title="24h 交易量" value={overview ? formatUSD(overview.totalVolume24h) : '-'} change="-5.1% 24h" changeType="negative" />
-        <KPICard title="ATM 隐含波动率" value={overview ? formatPercent(overview.atmIV) : '-'} change="+1.2% 24h" changeType="positive" />
-        <KPICard title="BTC 现货价格" value={overview ? formatUSD(overview.btcPrice) : '-'} change="+0.8% 24h" changeType="positive" />
+        <KPICard title="总持仓量 (OI)" value={overview ? formatUSD(overview.totalOI) : '-'} />
+        <KPICard title="24h 交易量" value={overview ? formatUSD(overview.totalVolume24h) : '-'} />
+        <KPICard title="ATM 隐含波动率" value={overview ? formatPercent(overview.atmIV) : '-'} />
+        <KPICard title="BTC 现货价格" value={overview ? formatUSD(overview.btcPrice) : '-'} />
       </div>
 
       <Card>

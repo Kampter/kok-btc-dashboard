@@ -3,10 +3,14 @@ import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import { QueryClient } from '@tanstack/react-query'
 import type { AppRouter } from '@kok/shared-types'
 
+const API_URL = typeof window !== 'undefined'
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:3000/trpc')
+  : 'http://localhost:3000/trpc'
+
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: 'http://localhost:3000/trpc',
+      url: API_URL,
     }),
   ],
 })

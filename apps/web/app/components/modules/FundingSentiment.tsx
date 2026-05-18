@@ -2,13 +2,8 @@ import * as React from 'react';
 import { useTrades } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorFallback } from '../ui/error-fallback';
+import { formatUSD } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-
-function formatUSD(value: number) {
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-  return `$${value.toFixed(0)}K`;
-}
 
 export function FundingSentiment() {
   const { data: trades, isLoading, isError, refetch } = useTrades('BTC', 500);
