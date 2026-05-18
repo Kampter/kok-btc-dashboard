@@ -25,7 +25,7 @@ for commit in $DANGLING; do
     if [ -n "$FILES" ]; then
         FOUND=$((FOUND + 1))
         echo ""
-        echo "🚨 DANGING COMMIT WITH DOCS: $commit"
+        echo "🚨 DANGLING COMMIT WITH DOCS: $commit"
         echo "   Date: $(git show -s --format=%ci "$commit" 2>/dev/null || echo 'unknown')"
         echo "   Message: $(git show -s --format=%s "$commit" 2>/dev/null || echo 'unknown')"
         echo "   Files:"
@@ -34,7 +34,9 @@ for commit in $DANGLING; do
         if [ "$1" = "--recover" ]; then
             mkdir -p "$RECOVER_DIR"
             for file in $FILES; do
-                TARGET="$RECOVER_DIR/$(basename "$file")"
+                rel_path="${file#$DOCS_PATTERN/}"
+                TARGET="$RECOVER_DIR/$rel_path"
+                mkdir -p "$(dirname "$TARGET")"
                 if [ ! -f "$TARGET" ]; then
                     git show "$commit:$file" > "$TARGET" 2>/dev/null
                     echo "   ✏️  Recovered to $TARGET"

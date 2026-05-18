@@ -13,15 +13,15 @@ TYPE="${1:-both}"
 case "$TYPE" in
     spec)
         FILES="docs/superpowers/specs/*.md"
-        MSG="docs: update spec"
+        MSG="docs: update $(date +%Y-%m-%d) spec"
         ;;
     plan)
         FILES="docs/superpowers/plans/*.md"
-        MSG="docs: update plan"
+        MSG="docs: update $(date +%Y-%m-%d) plan"
         ;;
     both)
         FILES="docs/superpowers/specs/*.md docs/superpowers/plans/*.md"
-        MSG="docs: update spec and plan"
+        MSG="docs: update $(date +%Y-%m-%d) spec and plan"
         ;;
     *)
         echo "Usage: $0 [spec|plan|both]"

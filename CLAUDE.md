@@ -122,7 +122,7 @@ git commit -m "docs: add [feature] plan/spec"
 切换 worktree 前，运行以下脚本检查是否有未提交的 docs：
 
 ```bash
-source .claude/hooks/pre-worktree-switch.sh
+source scripts/pre-worktree-switch.sh
 ```
 
 若检测到未提交的 `docs/superpowers/` 更改，脚本会阻止切换并提供处理选项（commit / stash / bypass）。
