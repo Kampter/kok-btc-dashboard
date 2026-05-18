@@ -17,7 +17,7 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'pnpm preview',
+    command: 'pnpm preview --port 5173',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
