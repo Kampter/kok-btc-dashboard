@@ -102,3 +102,39 @@ All GitHub operations (creating pull requests, viewing issues, checking checks, 
 ## Language Requirements
 
 All documentation, comments, and user-facing text output must be written in Chinese (中文). Code identifiers, technical terms, and file paths remain in English, but all explanations, instructions, and prose should be in Chinese.
+
+## Documentation Safety Rules
+
+### Plan / Spec 文档必须立即提交
+
+使用 superpowers 技能创建 `docs/superpowers/plans/` 或 `docs/superpowers/specs/` 文档后，**必须立即执行 `git add && git commit`**，然后才能继续下一步（如创建 worktree、切换分支）。
+
+```bash
+# 创建 plan 或 spec 后立即提交
+git add docs/superpowers/
+git commit -m "docs: add [feature] plan/spec"
+```
+
+**原因**：这些文档在 worktree 切换时极易丢失（worktree 切换不会自动携带未提交的更改），且 `.claude/` 和 `.superpowers/` 已在 `.gitignore` 中。
+
+### Worktree 切换前检查
+
+切换 worktree 前，运行以下脚本检查是否有未提交的 docs：
+
+```bash
+source .claude/hooks/pre-worktree-switch.sh
+```
+
+若检测到未提交的 `docs/superpowers/` 更改，脚本会阻止切换并提供处理选项（commit / stash / bypass）。
+
+### Dangling Commit 恢复
+
+若怀疑文档已丢失在 dangling commit 中：
+
+```bash
+# 扫描丢失的文档
+./scripts/check-dangling-docs.sh
+
+# 自动恢复到 docs/superpowers/recovered/
+./scripts/check-dangling-docs.sh --recover
+```
