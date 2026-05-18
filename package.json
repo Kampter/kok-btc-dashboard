@@ -8,7 +8,10 @@
     "dev": "pnpm -r --parallel dev",
     "dev:web": "pnpm --filter @kok/web dev",
     "dev:api": "pnpm --filter @kok/api dev",
-    "test": "pnpm -r test",
+    "test": "vitest",
+    "test:run": "vitest --run",
+    "test:coverage": "vitest --run --coverage",
+    "test:e2e": "pnpm --filter @kok/web test:e2e",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck"
   },
