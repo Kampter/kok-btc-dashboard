@@ -3,15 +3,14 @@
 #
 # Usage: Source this script before switching worktrees:
 #   source scripts/pre-worktree-switch.sh
-
-set -e
+#
+# NOTE: This script is designed to be sourced (not executed directly).
+# All failure exits use `return` to avoid closing the user's shell.
 
 DOCS_DIR="docs/superpowers"
 
 # Check for uncommitted changes in docs/superpowers/
-if git diff --quiet HEAD -- "$DOCS_DIR" 2>/dev/null; then
-    : # No changes, safe to proceed
-else
+if ! git diff --quiet HEAD -- "$DOCS_DIR" 2>/dev/null; then
     echo "⚠️  WARNING: Uncommitted changes detected in $DOCS_DIR"
     echo ""
     git status --short "$DOCS_DIR"
@@ -24,7 +23,7 @@ else
 
     if [ -z "$SKIP_DOCS_CHECK" ]; then
         echo "❌ Aborting worktree switch. Set SKIP_DOCS_CHECK=1 to bypass."
-        exit 1
+        return 1
     else
         echo "⚡ SKIP_DOCS_CHECK is set, proceeding anyway..."
     fi
@@ -39,7 +38,7 @@ if [ -n "$UNTRACKED" ]; then
 
     if [ -z "$SKIP_DOCS_CHECK" ]; then
         echo "❌ Aborting worktree switch. Set SKIP_DOCS_CHECK=1 to bypass."
-        exit 1
+        return 1
     else
         echo "⚡ SKIP_DOCS_CHECK is set, proceeding anyway..."
     fi
