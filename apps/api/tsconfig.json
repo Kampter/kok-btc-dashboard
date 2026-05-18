@@ -21,5 +21,13 @@
     "esModuleInterop": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.*",
+    "**/*.spec.ts",
+    "**/*.e2e.ts",
+    "**/__tests__/**"
+  ]
 }
