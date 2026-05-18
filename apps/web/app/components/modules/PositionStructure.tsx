@@ -25,21 +25,28 @@ export function PositionStructure() {
   const callRatio = ratioData.length === 2 ? (ratioData[0].value / (ratioData[0].value + ratioData[1].value)) * 100 : 50;
 
   const heatmapData = React.useMemo(() => {
-    if (!bookData) return { expiries: [], strikes: [], matrix: [] as number[][] };
+    if (!bookData) return { expiries: [], strikes: [], callMatrix: [] as number[][], putMatrix: [] as number[][] };
     const btcPrice = bookData.find((i) => i.underlying_price > 0)?.underlying_price ?? 100000;
     const filtered = bookData.filter((i) => i.strike >= btcPrice * 0.7 && i.strike <= btcPrice * 1.3);
     const expiries: string[] = Array.from(new Set(filtered.map((i) => i.expiry))).sort();
     const strikes: number[] = Array.from(new Set(filtered.map((i) => i.strike))).sort((a, b) => a - b);
-    const matrix = strikes.map(() => expiries.map(() => 0));
+    const callMatrix = strikes.map(() => expiries.map(() => 0));
+    const putMatrix = strikes.map(() => expiries.map(() => 0));
     for (const item of filtered) {
       const eIdx = expiries.indexOf(item.expiry);
       const sIdx = strikes.indexOf(item.strike);
-      if (eIdx >= 0 && sIdx >= 0) matrix[sIdx][eIdx] += item.open_interest_usd;
+      if (eIdx >= 0 && sIdx >= 0) {
+        if (item.option_type === 'C') callMatrix[sIdx][eIdx] += item.open_interest_usd;
+        else putMatrix[sIdx][eIdx] += item.open_interest_usd;
+      }
     }
-    return { expiries, strikes, matrix };
+    return { expiries, strikes, callMatrix, putMatrix };
   }, [bookData]);
 
-  const maxOI = React.useMemo(() => heatmapData.matrix.length > 0 ? Math.max(...heatmapData.matrix.flat()) : 1, [heatmapData]);
+  const maxOI = React.useMemo(() => {
+    const all = [...heatmapData.callMatrix.flat(), ...heatmapData.putMatrix.flat()];
+    return all.length > 0 ? Math.max(...all) : 1;
+  }, [heatmapData]);
 
   return (
     <div className="space-y-6">
@@ -82,9 +89,24 @@ export function PositionStructure() {
               {heatmapData.strikes.map((strike, sIdx) => (
                 <div key={strike} className="flex items-center">
                   <div className="w-16 text-right text-xs text-muted-foreground">${(strike / 1000).toFixed(0)}K</div>
-                  {heatmapData.matrix[sIdx].map((oi, eIdx) => {
-                    const intensity = Math.min(oi / maxOI, 1);
-                    return <div key={`${sIdx}-${eIdx}`} className="w-20 h-6 border border-border/30" style={{ backgroundColor: `rgba(233, 69, 96, ${intensity * 0.8 + 0.1})` }} title={`Strike $${strike}, OI: $${(oi / 1e6).toFixed(2)}M`} />;
+                  {heatmapData.callMatrix[sIdx]?.map((callOi, eIdx) => {
+                    const putOi = heatmapData.putMatrix[sIdx]?.[eIdx] ?? 0;
+                    const totalOi = callOi + putOi;
+                    const intensity = Math.min(totalOi / maxOI, 1);
+                    const callRatio = totalOi > 0 ? callOi / totalOi : 0.5;
+                    // 混合 Call 绿色 (#4ade80) 和 Put 红色 (#e94560)
+                    const r = Math.round(74 * callRatio + 233 * (1 - callRatio));
+                    const g = Math.round(222 * callRatio + 69 * (1 - callRatio));
+                    const b = Math.round(128 * callRatio + 96 * (1 - callRatio));
+                    const alpha = intensity * 0.8 + 0.1;
+                    return (
+                      <div
+                        key={`${sIdx}-${eIdx}`}
+                        className="w-20 h-6 border border-border/30"
+                        style={{ backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha})` }}
+                        title={`Strike $${strike}, Call: $${(callOi / 1e6).toFixed(2)}M, Put: $${(putOi / 1e6).toFixed(2)}M`}
+                      />
+                    );
                   })}
                 </div>
               ))}

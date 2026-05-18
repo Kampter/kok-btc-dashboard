@@ -9,12 +9,14 @@
     "test": "jest"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.1.21",
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.21",
     "@trpc/server": "^11.17.0",
     "@kok/shared-types": "workspace:*",
     "axios": "^1.8.0",
+    "cache-manager": "^6.4.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^4.4.3"
