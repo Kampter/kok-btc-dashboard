@@ -14,6 +14,10 @@
       "import": "./dist/schemas/index.js",
       "types": "./dist/schemas/index.d.ts"
     },
+    "./fixtures": {
+      "import": "./dist/fixtures/index.js",
+      "types": "./dist/fixtures/index.d.ts"
+    },
     "./trpc": {
       "import": "./dist/trpc/router.js",
       "types": "./dist/trpc/router.d.ts"
@@ -22,6 +26,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "test": "vitest --run",
+    "test:run": "vitest --run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
