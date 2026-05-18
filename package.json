@@ -6,7 +6,9 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
-    "test": "pnpm -r test",
+    "test": "pnpm --filter @kok/shared-types test:run && pnpm --filter @kok/web test:run && pnpm test:e2e",
+    "test:web": "pnpm --filter @kok/web test:run",
+    "test:e2e": "pnpm --filter @kok/web test:e2e",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck"
   },
