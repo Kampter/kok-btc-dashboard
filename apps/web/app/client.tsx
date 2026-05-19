@@ -1,15 +1,12 @@
-import { StrictMode } from 'react'
+import { StrictMode, startTransition } from 'react'
 import { hydrateRoot } from 'react-dom/client'
-import { RouterProvider } from '@tanstack/react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { getRouter } from './router'
-import { queryClient } from './lib/trpc'
+import { StartClient } from '@tanstack/react-start/client'
 
-hydrateRoot(
-  document.getElementById('app')!,
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={getRouter()} />
-    </QueryClientProvider>
-  </StrictMode>,
-)
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <StrictMode>
+      <StartClient />
+    </StrictMode>,
+  )
+})
