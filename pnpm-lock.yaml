@@ -44,6 +44,9 @@ importers:
       cache-manager:
         specifier: ^6.4.2
         version: 6.4.3
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       pg:
         specifier: ^8.15.6
         version: 8.21.0
