@@ -30,6 +30,7 @@
     "@nestjs/testing": "^11.1.21",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
     "vitest": "^2.0.0"

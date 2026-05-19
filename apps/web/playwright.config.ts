@@ -1,4 +1,8 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig, devices } from '@playwright/test'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   testDir: './e2e',
@@ -16,10 +20,22 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
-  webServer: {
-    command: 'pnpm preview --port 5173',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: [
+    {
+      command: 'node dist/main.js',
+      cwd: path.resolve(__dirname, '../api'),
+      stdout: 'API server running on http://localhost:3000',
+      env: {
+        DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/kok_cache',
+        FRONTEND_URL: 'http://localhost:5173',
+      },
+      timeout: 120000,
+    },
+    {
+      command: 'pnpm preview --port 5173',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
 })

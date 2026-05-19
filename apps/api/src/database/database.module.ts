@@ -12,7 +12,7 @@ import { PersistentCacheService, DB_POOL } from './persistent-cache.service'
           throw new Error('DATABASE_URL environment variable is not set')
         }
         const pool = new Pool({ connectionString })
-        pool.on('error', (err) => {
+        pool.on('error', (err: Error) => {
           Logger.error(`Unexpected PostgreSQL pool error: ${err.message}`, err.stack, 'DatabaseModule')
         })
         return pool
