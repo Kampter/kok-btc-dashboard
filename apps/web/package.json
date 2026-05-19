@@ -8,6 +8,7 @@
     "build": "vite build",
     "start": "vite start",
     "preview": "vite preview --port 5173",
+    "test:e2e": "playwright test",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },

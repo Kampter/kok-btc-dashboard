@@ -22,10 +22,8 @@ test.describe('Dashboard', () => {
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
     // 点击波动率分析 tab
     await page.getByRole('button', { name: '波动率分析' }).click()
-    // 等待 tRPC 数据请求完成，然后让 Playwright 自动等待渲染
-    await page.waitForResponse((resp) => resp.url().includes('/trpc/'), { timeout: 10000 })
-    // 波动率分析 tab 应显示 IV 相关图表
-    await expect(page.locator('text=IV 期限结构').first()).toBeVisible({ timeout: 10000 })
+    // 波动率分析 tab 应显示 IV 相关图表（数据可能已缓存，不依赖新请求）
+    await expect(page.getByText('IV 期限结构').first()).toBeVisible({ timeout: 10000 })
   })
 
   test('header shows Deribit connection status', async ({ page }) => {
