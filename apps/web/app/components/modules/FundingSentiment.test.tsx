@@ -21,7 +21,7 @@ describe('FundingSentiment', () => {
       isLoading: true,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 
@@ -34,7 +34,7 @@ describe('FundingSentiment', () => {
       isLoading: false,
       isError: true,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 
@@ -48,7 +48,7 @@ describe('FundingSentiment', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 
@@ -61,7 +61,7 @@ describe('FundingSentiment', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 
@@ -88,7 +88,7 @@ describe('FundingSentiment', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 
@@ -101,7 +101,7 @@ describe('FundingSentiment', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTrades>);
+    } as unknown as ReturnType<typeof useTrades>);
 
     render(<FundingSentiment />);
 

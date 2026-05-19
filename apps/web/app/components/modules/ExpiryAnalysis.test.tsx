@@ -21,7 +21,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: true,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 
@@ -34,7 +34,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: false,
       isError: true,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 
@@ -48,7 +48,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 
@@ -61,7 +61,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 
@@ -74,7 +74,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 
@@ -88,7 +88,7 @@ describe('ExpiryAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
 
     render(<ExpiryAnalysis />);
 

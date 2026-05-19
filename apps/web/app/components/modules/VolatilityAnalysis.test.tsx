@@ -23,13 +23,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: true,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -42,13 +42,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: undefined,
       isLoading: true,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -61,13 +61,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: true,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: rawHistoricalVolatilityBTC,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -81,13 +81,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: true,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -101,13 +101,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: rawHistoricalVolatilityBTC,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -120,13 +120,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: rawHistoricalVolatilityBTC,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -139,13 +139,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: rawHistoricalVolatilityBTC,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
@@ -158,13 +158,13 @@ describe('VolatilityAnalysis', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useBookSummary>);
+    } as unknown as ReturnType<typeof useBookSummary>);
     mockedUseHistoricalVolatility.mockReturnValue({
       data: [],
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useHistoricalVolatility>);
+    } as unknown as ReturnType<typeof useHistoricalVolatility>);
 
     render(<VolatilityAnalysis />);
 
