@@ -103,12 +103,13 @@ CREATE INDEX idx_cache_entries_expires_at ON cache_entries(expires_at);
 @Injectable()
 export class PersistentCacheService {
   // 从 PG 读取缓存
-  async get<T>(key: string): Promise<T | null>
+  // includeExpired: true 时返回已过期的缓存（stale-while-error 场景）
+  async get<T>(key: string, options?: { includeExpired?: boolean }): Promise<T | null>
 
   // 写入 PG 缓存
   async set<T>(key: string, value: T, ttlMs: number): Promise<void>
 
-  // 清理过期缓存（可配 cron 或启动时执行）
+  // 清理过期缓存（启动时执行一次）
   async cleanupExpired(): Promise<void>
 }
 ```
@@ -220,7 +221,7 @@ async onModuleInit() {
 ### 本次实现包含
 
 - [ ] `DatabaseModule` + `PersistentCacheService`
-- [ ] `cache_entries` 表迁移（或启动时自动创建）
+- [ ] `cache_entries` 表启动时自动创建（若不存在）
 - [ ] `DeribitService` 改造（L2 查询 + 双写）
 - [ ] 环境变量配置 `DATABASE_URL`
 - [ ] 单元测试 + 集成测试
