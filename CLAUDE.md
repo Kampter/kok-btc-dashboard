@@ -33,6 +33,24 @@ pnpm typecheck        # 全量类型检查
 - **触发**：任何可能修改现有代码的工作
 - **自动加载**：`superpowers:using-git-worktrees` → 创建独立 worktree，避免污染当前工作区
 
+#### 跨 worktree 移动变更的正确方式
+
+Worktree 只隔离 git 追踪的状态，不隔离文件系统。通过 Finder 或 `cp` 从 worktree 复制文件到主仓库会导致 macOS 自动生成 `filename 2.ext` 副本，污染 git 状态。
+
+**✅ 正确做法**：
+
+| 场景 | 命令 |
+|------|------|
+| worktree 已有提交 | `git cherry-pick <commit>` |
+| worktree 有未提交的变更 | `git diff > changes.patch && git apply changes.patch` |
+| 只需某个文件 | `git checkout <branch> -- <file>` |
+| 合并整个分支 | `git merge <branch>` 或 `git rebase <branch>` |
+
+**❌ 禁止做法**：
+- 在 Finder 中拖拽文件跨 worktree
+- 使用 `cp`、`rsync` 等文件系统工具复制
+- 直接操作 `.git/` 目录内的文件
+
 ### 需求探索与设计
 - **触发**：需求不清晰、涉及新功能、需要架构决策
 - **自动加载**：`superpowers:brainstorming` → 产出设计文档到 `docs/superpowers/specs/YYYY-MM-DD-feature-name.md`
