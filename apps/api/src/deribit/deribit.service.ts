@@ -1,10 +1,11 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import axios from 'axios';
 import { PersistentCacheService } from '../database/persistent-cache.service';
 
 const DERIBIT_API_URL = 'https://www.deribit.com/api/v2/public';
+const L2_TTL_MULTIPLIER = 20;
 
 @Injectable()
 export class DeribitService {
@@ -36,7 +37,10 @@ export class DeribitService {
           return persistent;
         }
       } catch (error) {
-        // 降级：PG 读取失败时静默 fallback 到 API 调用
+        Logger.warn(
+          `L2 cache read failed for ${cacheKey}, falling back to API: ${error instanceof Error ? error.message : String(error)}`,
+          'DeribitService',
+        );
       }
     }
 
@@ -46,9 +50,12 @@ export class DeribitService {
 
       if (this.persistentCache) {
         try {
-          await this.persistentCache.set(cacheKey, result, ttlMs * 20);
-        } catch {
-          // PG 写入失败不影响请求返回
+          await this.persistentCache.set(cacheKey, result, ttlMs * L2_TTL_MULTIPLIER);
+        } catch (error) {
+          Logger.warn(
+            `L2 cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
+            'DeribitService',
+          );
         }
       }
 
@@ -59,8 +66,11 @@ export class DeribitService {
         try {
           const stale = await this.persistentCache.get<T>(cacheKey, { includeExpired: true });
           if (stale) return stale;
-        } catch {
-          // 忽略 stale cache 读取错误
+        } catch (error) {
+          Logger.warn(
+            `L2 stale cache read failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
+            'DeribitService',
+          );
         }
       }
       throw error;

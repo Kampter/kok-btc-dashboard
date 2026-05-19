@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, Logger } from '@nestjs/common'
 import { Pool } from 'pg'
 import { PersistentCacheService, DB_POOL } from './persistent-cache.service'
 
@@ -11,7 +11,11 @@ import { PersistentCacheService, DB_POOL } from './persistent-cache.service'
         if (!connectionString) {
           throw new Error('DATABASE_URL environment variable is not set')
         }
-        return new Pool({ connectionString })
+        const pool = new Pool({ connectionString })
+        pool.on('error', (err) => {
+          Logger.error(`Unexpected PostgreSQL pool error: ${err.message}`, err.stack, 'DatabaseModule')
+        })
+        return pool
       },
     },
     PersistentCacheService,
