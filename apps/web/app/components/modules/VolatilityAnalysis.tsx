@@ -23,7 +23,7 @@ export function VolatilityAnalysis() {
         const sorted = ivs.sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
         const daysToExpiry = Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        return { expiry: `${daysToExpiry}D`, iv: median * 100, daysToExpiry };
+        return { expiry: `${daysToExpiry}D`, iv: median, daysToExpiry };
       })
       .sort((a, b) => a.daysToExpiry - b.daysToExpiry)
       .slice(0, 10);
@@ -46,7 +46,7 @@ export function VolatilityAnalysis() {
     return buckets.map((b) => {
       const ivs = nearestItems
         .filter((i) => { const moneyness = i.strike / btcPrice; return moneyness >= b.min && moneyness < b.max; })
-        .map((i) => i.mark_iv * 100);
+        .map((i) => i.mark_iv);
       const avg = ivs.length > 0 ? ivs.reduce((a, c) => a + c, 0) / ivs.length : 0;
       return { moneyness: b.label, iv: avg };
     });
@@ -56,7 +56,7 @@ export function VolatilityAnalysis() {
     if (!histVolData) return [];
     return histVolData.map((item) => ({
       date: new Date(item.timestamp).toLocaleDateString('zh-CN'),
-      hv: item.volatility * 100,
+      hv: item.volatility,
     }));
   }, [histVolData]);
 
