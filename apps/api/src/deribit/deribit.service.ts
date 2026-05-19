@@ -50,13 +50,12 @@ export class DeribitService {
     return this.fetchWithCache(
       `index_price_${indexName}`,
       async () => {
-        const { data } = await this.client.get('/get_index', {
+        const { data } = await this.client.get('/get_index_price', {
           params: { index_name: indexName },
         });
-        // Deribit returns { "btc_usd": 89950.5 }
-        const result = data.result as Record<string, number>;
-        const indexPrice = result[indexName] ?? 0;
-        return { index_price: indexPrice, estimated_delivery_price: indexPrice };
+        // Deribit returns { index_price: 89950.5, estimated_delivery_price: 89950.5 }
+        const result = data.result as { index_price: number; estimated_delivery_price: number };
+        return { index_price: result.index_price ?? 0, estimated_delivery_price: result.estimated_delivery_price ?? 0 };
       },
     );
   }

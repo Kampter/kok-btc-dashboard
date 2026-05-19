@@ -49,10 +49,10 @@ describe('DeribitService', () => {
 
   describe('getIndexPrice', () => {
     it('returns index price data', async () => {
-      // Deribit API returns { "btc_usd": 89950.5 }
-      mockGet.mockResolvedValueOnce({ data: { result: { btc_usd: 89950.5 } } })
+      // Deribit API returns { index_price: 89950.5, estimated_delivery_price: 89950.5 }
+      mockGet.mockResolvedValueOnce({ data: { result: { index_price: 89950.5, estimated_delivery_price: 89950.5 } } })
       const result = await service.getIndexPrice('btc_usd')
-      expect(mockGet).toHaveBeenCalledWith('/get_index', {
+      expect(mockGet).toHaveBeenCalledWith('/get_index_price', {
         params: { index_name: 'btc_usd' },
       })
       expect(result.index_price).toBe(89950.5)
