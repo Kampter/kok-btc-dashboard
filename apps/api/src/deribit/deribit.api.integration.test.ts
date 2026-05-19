@@ -4,10 +4,11 @@ import axios from 'axios'
 const DERIBIT_API_URL = 'https://www.deribit.com/api/v2/public'
 const client = axios.create({
   baseURL: DERIBIT_API_URL,
-  timeout: 10000,
+  timeout: 15000,
 })
 
-describe('Deribit API integration', () => {
+// 顺序执行，避免并行请求触发 Deribit rate limit
+describe.sequential('Deribit API integration', () => {
   it('get_book_summary_by_currency returns valid option data', async () => {
     const { data } = await client.get('/get_book_summary_by_currency', {
       params: { currency: 'BTC', kind: 'option' },
@@ -69,4 +70,4 @@ describe('Deribit API integration', () => {
     expect(data.result).toHaveProperty('trades')
     expect(Array.isArray(data.result.trades)).toBe(true)
   })
-})
+}, 30000)
