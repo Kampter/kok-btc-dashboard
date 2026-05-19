@@ -3,7 +3,7 @@ import { useTrades } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorFallback } from '../ui/error-fallback';
 import { formatUSD } from '../../lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function FundingSentiment() {
   const { data: trades, isLoading, isError, refetch } = useTrades('BTC', 500);
@@ -25,6 +25,7 @@ export function FundingSentiment() {
 
   const pcRatio = React.useMemo(() => {
     if (!trades) return [];
+    // 先尝试按天聚合
     const byDay = new Map<string, { put: number; call: number }>();
     for (const trade of trades) {
       const day = new Date(trade.timestamp).toLocaleDateString('zh-CN');
@@ -33,6 +34,22 @@ export function FundingSentiment() {
       if (trade.option_type === 'C') existing.call += notional;
       else existing.put += notional;
       byDay.set(day, existing);
+    }
+    // 如果只有一天数据，按小时聚合显示日内趋势
+    if (byDay.size <= 1) {
+      const byHour = new Map<string, { put: number; call: number }>();
+      for (const trade of trades) {
+        const hour = new Date(trade.timestamp).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit' });
+        const existing = byHour.get(hour) ?? { put: 0, call: 0 };
+        const notional = trade.amount * trade.price;
+        if (trade.option_type === 'C') existing.call += notional;
+        else existing.put += notional;
+        byHour.set(hour, existing);
+      }
+      return Array.from(byHour.entries()).map(([hour, v]) => ({
+        day: hour,
+        ratio: v.call > 0 ? (v.put / (v.put + v.call)) * 100 : 0,
+      })).sort((a, b) => a.day.localeCompare(b.day));
     }
     return Array.from(byDay.entries()).map(([day, v]) => ({
       day,
@@ -65,13 +82,13 @@ export function FundingSentiment() {
         <CardHeader><CardTitle className="text-base">Put/Call 交易量比例</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={pcRatio}>
+            <BarChart data={pcRatio}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" domain={[0, 100]} />
               <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(1)}%`} />
-              <Line type="monotone" dataKey="ratio" name="P/C 比例" stroke="#f59e0b" strokeWidth={2} dot={false} />
-            </LineChart>
+              <Bar dataKey="ratio" name="P/C 比例" fill="#f59e0b" />
+            </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
