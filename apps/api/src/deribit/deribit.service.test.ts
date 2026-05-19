@@ -22,12 +22,19 @@ describe('DeribitService', () => {
     get: vi.fn<Cache['get']>(),
     set: vi.fn<Cache['set']>(),
   }
+  const mockPersistentCache = {
+    get: vi.fn(),
+    set: vi.fn(),
+    cleanupExpired: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
     mockCacheManager.get.mockResolvedValue(undefined)
     mockCacheManager.set.mockResolvedValue(undefined)
-    service = new DeribitService(mockCacheManager as Cache)
+    mockPersistentCache.get.mockResolvedValue(null)
+    mockPersistentCache.set.mockResolvedValue(undefined)
+    service = new DeribitService(mockCacheManager as Cache, mockPersistentCache as any)
   })
 
   describe('getBookSummaryByCurrency', () => {
