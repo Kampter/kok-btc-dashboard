@@ -22,12 +22,20 @@ describe('DeribitService edge cases', () => {
     get: vi.fn<Cache['get']>(),
     set: vi.fn<Cache['set']>(),
   }
+  const mockPersistentCache = {
+    get: vi.fn(),
+    set: vi.fn(),
+    cleanupExpired: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGet.mockReset()
     mockCacheManager.get.mockResolvedValue(undefined)
     mockCacheManager.set.mockResolvedValue(undefined)
-    service = new DeribitService(mockCacheManager as Cache)
+    mockPersistentCache.get.mockResolvedValue(null)
+    mockPersistentCache.set.mockResolvedValue(undefined)
+    service = new DeribitService(mockCacheManager as Cache, mockPersistentCache as any)
   })
 
   describe('fetchWithCache cache hit', () => {
@@ -46,23 +54,25 @@ describe('DeribitService edge cases', () => {
     it('returns stale cache on 429 rate limit', async () => {
       const staleData = [{ instrument_name: 'BTC-RATE-LIMIT' }]
       mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
       const error = new Error('429 Too Many Requests')
       ;(error as any).response = { status: 429 }
       mockGet.mockRejectedValueOnce(error)
-      mockCacheManager.get.mockResolvedValueOnce(staleData)
+      mockPersistentCache.get.mockResolvedValueOnce(staleData)
 
       const result = await service.getBookSummaryByCurrency('BTC', 'option')
 
       expect(result).toEqual(staleData)
-      expect(mockCacheManager.get).toHaveBeenCalledTimes(2)
+      expect(mockPersistentCache.get).toHaveBeenCalledTimes(2)
     })
 
     it('throws when 429 occurs with no stale cache', async () => {
       mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
       const error = new Error('429 Too Many Requests')
       ;(error as any).response = { status: 429 }
       mockGet.mockRejectedValueOnce(error)
-      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
 
       await expect(service.getBookSummaryByCurrency('BTC', 'option')).rejects.toThrow('429')
     })
@@ -72,8 +82,9 @@ describe('DeribitService edge cases', () => {
     it('falls back to stale cache on API error', async () => {
       const staleData = [{ instrument_name: 'BTC-STALE' }]
       mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
       mockGet.mockRejectedValueOnce(new Error('API timeout'))
-      mockCacheManager.get.mockResolvedValueOnce(staleData)
+      mockPersistentCache.get.mockResolvedValueOnce(staleData)
 
       const result = await service.getBookSummaryByCurrency('BTC', 'option')
 
@@ -84,8 +95,9 @@ describe('DeribitService edge cases', () => {
   describe('fetchWithCache total failure', () => {
     it('propagates error when both API and stale cache fail', async () => {
       mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
       mockGet.mockRejectedValueOnce(new Error('API down'))
-      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
 
       await expect(service.getBookSummaryByCurrency('BTC', 'option')).rejects.toThrow('API down')
     })
@@ -159,6 +171,84 @@ describe('DeribitService edge cases', () => {
       const result = await service.getBookSummaryByCurrency('BTC', 'option')
 
       expect(result).toBeUndefined()
+    })
+  })
+
+  describe('two-layer caching', () => {
+    it('L1 miss + L2 hit: returns persistent cache and writes back to L1', async () => {
+      const persistentData = [{ instrument_name: 'BTC-L2-HIT' }]
+      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(persistentData)
+
+      const result = await service.getBookSummaryByCurrency('BTC', 'option')
+
+      expect(mockGet).not.toHaveBeenCalled()
+      expect(result).toEqual(persistentData)
+      expect(mockCacheManager.set).toHaveBeenCalledWith(
+        'book_summary_BTC_option',
+        persistentData,
+        30000,
+      )
+    })
+
+    it('L1 miss + L2 miss: calls API and writes to both L1 and L2', async () => {
+      const apiData = { result: rawBookSummaryBTC }
+      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
+      mockGet.mockResolvedValueOnce({ data: apiData })
+
+      await service.getBookSummaryByCurrency('BTC', 'option')
+
+      expect(mockGet).toHaveBeenCalledTimes(1)
+      expect(mockCacheManager.set).toHaveBeenCalledWith(
+        'book_summary_BTC_option',
+        rawBookSummaryBTC,
+        30000,
+      )
+      expect(mockPersistentCache.set).toHaveBeenCalledWith(
+        'book_summary_BTC_option',
+        rawBookSummaryBTC,
+        600000,
+      )
+    })
+
+    it('L2 read failure degrades gracefully to API call', async () => {
+      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockRejectedValueOnce(new Error('PG connection lost'))
+      mockGet.mockResolvedValueOnce({ data: { result: rawBookSummaryBTC } })
+
+      const result = await service.getBookSummaryByCurrency('BTC', 'option')
+
+      expect(mockGet).toHaveBeenCalledTimes(1)
+      expect(result).toEqual(rawBookSummaryBTC)
+    })
+
+    it('API error falls back to stale L2 cache', async () => {
+      const staleData = [{ instrument_name: 'BTC-STALE-L2' }]
+      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockPersistentCache.get.mockResolvedValueOnce(null)
+      mockGet.mockRejectedValueOnce(new Error('API down'))
+      mockPersistentCache.get.mockResolvedValueOnce(staleData)
+
+      const result = await service.getBookSummaryByCurrency('BTC', 'option')
+
+      expect(result).toEqual(staleData)
+      expect(mockPersistentCache.get).toHaveBeenCalledTimes(2)
+      expect(mockPersistentCache.get).toHaveBeenLastCalledWith(
+        'book_summary_BTC_option',
+        { includeExpired: true },
+      )
+    })
+
+    it('works without PersistentCacheService (backward compatible)', async () => {
+      const serviceWithoutL2 = new DeribitService(mockCacheManager as Cache, undefined as any)
+      mockCacheManager.get.mockResolvedValueOnce(undefined)
+      mockGet.mockResolvedValueOnce({ data: { result: rawBookSummaryBTC } })
+
+      const result = await serviceWithoutL2.getBookSummaryByCurrency('BTC', 'option')
+
+      expect(result).toEqual(rawBookSummaryBTC)
+      expect(mockPersistentCache.set).not.toHaveBeenCalled()
     })
   })
 })

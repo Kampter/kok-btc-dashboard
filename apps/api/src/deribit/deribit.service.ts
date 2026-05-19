@@ -1,9 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import axios from 'axios';
+import { PersistentCacheService } from '../database/persistent-cache.service';
 
 const DERIBIT_API_URL = 'https://www.deribit.com/api/v2/public';
+const L2_TTL_MULTIPLIER = 20;
 
 @Injectable()
 export class DeribitService {
@@ -12,24 +14,65 @@ export class DeribitService {
     timeout: 10000,
   });
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Optional() private readonly persistentCache?: PersistentCacheService,
+  ) {}
 
   private async fetchWithCache<T>(
     cacheKey: string,
     fetcher: () => Promise<T>,
     ttlMs = 30000,
   ): Promise<T> {
+    // L1: 内存缓存
     const cached = await this.cacheManager.get<T>(cacheKey);
     if (cached) return cached;
+
+    // L2: PostgreSQL 持久化缓存
+    if (this.persistentCache) {
+      try {
+        const persistent = await this.persistentCache.get<T>(cacheKey);
+        if (persistent) {
+          await this.cacheManager.set(cacheKey, persistent, ttlMs);
+          return persistent;
+        }
+      } catch (error) {
+        Logger.warn(
+          `L2 cache read failed for ${cacheKey}, falling back to API: ${error instanceof Error ? error.message : String(error)}`,
+          'DeribitService',
+        );
+      }
+    }
 
     try {
       const result = await fetcher();
       await this.cacheManager.set(cacheKey, result, ttlMs);
+
+      if (this.persistentCache) {
+        try {
+          await this.persistentCache.set(cacheKey, result, ttlMs * L2_TTL_MULTIPLIER);
+        } catch (error) {
+          Logger.warn(
+            `L2 cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
+            'DeribitService',
+          );
+        }
+      }
+
       return result;
     } catch (error) {
-      // 如果 API 失败，尝试返回缓存数据（即使已过期）
-      const stale = await this.cacheManager.get<T>(cacheKey);
-      if (stale) return stale;
+      // API 失败时尝试返回 L2 中的过期数据
+      if (this.persistentCache) {
+        try {
+          const stale = await this.persistentCache.get<T>(cacheKey, { includeExpired: true });
+          if (stale) return stale;
+        } catch (error) {
+          Logger.warn(
+            `L2 stale cache read failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
+            'DeribitService',
+          );
+        }
+      }
       throw error;
     }
   }
