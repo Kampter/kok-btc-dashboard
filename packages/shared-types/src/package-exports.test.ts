@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import pkg from '../package.json'
+import pkg from '../package.json' with { type: 'json' }
 
 describe('package.json exports', () => {
-  const exportPaths = ['.', './schemas', './fixtures', './trpc']
+  type ExportPath = '.' | './schemas' | './fixtures' | './trpc'
+  const exportPaths: ExportPath[] = ['.', './schemas', './fixtures', './trpc']
 
   it.each(exportPaths)('exports %s with both import and require conditions', (path) => {
     const exp = pkg.exports[path]
