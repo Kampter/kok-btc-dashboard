@@ -13,6 +13,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
+    "types": ["vitest/globals"],
     "paths": {
       "@/*": ["./app/*"]
     }

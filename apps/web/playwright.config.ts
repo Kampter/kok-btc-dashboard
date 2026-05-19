@@ -20,5 +20,6 @@ export default defineConfig({
     command: 'pnpm preview --port 5173',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000,
   },
 })

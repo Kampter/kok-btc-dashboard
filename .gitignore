@@ -9,3 +9,11 @@ coverage/
 .turbo
 .claude/
 .superpowers/
+
+# tsc --watch 在 src 目录生成的中间产物（shared-types tsconfig 未配置 outDir 时）
+packages/shared-types/src/**/*.js
+packages/shared-types/src/**/*.d.ts
+packages/shared-types/src/**/*.js.map
+
+# Playwright 测试输出
+apps/web/test-results/

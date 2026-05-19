@@ -8,18 +8,22 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./schemas": {
       "import": "./dist/schemas/index.js",
+      "require": "./dist/schemas/index.js",
       "types": "./dist/schemas/index.d.ts"
     },
     "./fixtures": {
       "import": "./dist/fixtures/index.js",
+      "require": "./dist/fixtures/index.js",
       "types": "./dist/fixtures/index.d.ts"
     },
     "./trpc": {
       "import": "./dist/trpc/router.js",
+      "require": "./dist/trpc/router.js",
       "types": "./dist/trpc/router.d.ts"
     }
   },
