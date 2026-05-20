@@ -30,6 +30,29 @@ export const appRouter = t.router({
       }))
       .query(async () => ({} as OIDistributionList)),
   }),
+
+  chat: t.router({
+    stream: t.procedure
+      .input(
+        z.object({
+          messages: z.array(
+            z.object({
+              role: z.enum(['user', 'assistant']),
+              content: z.string(),
+            }),
+          ),
+          context: z.object({
+            activeTab: z.string(),
+            timeRange: z.string().optional(),
+            filters: z.record(z.string(), z.unknown()).optional(),
+            lastUpdated: z.string(),
+          }),
+        }),
+      )
+      .mutation(async function* () {
+        yield { type: 'text' as const, text: '' };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -6,6 +6,7 @@ import { PositionStructure } from './modules/PositionStructure'
 import { FundingSentiment } from './modules/FundingSentiment'
 import { ExpiryAnalysis } from './modules/ExpiryAnalysis'
 import { OIDistribution } from './modules/OIDistribution'
+import { AgentChatPanel } from './chat/AgentChatPanel'
 
 const MODULES = [
   { id: 'overview', label: '市场概况' },
@@ -29,51 +30,55 @@ export function DashboardLayout() {
   const [activeTab, setActiveTab] = useState<ModuleId>('overview')
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-bold">BTC Options Dashboard</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-call" />
-              Deribit
-            </span>
-            <span>自动刷新 30s</span>
+    <div className="flex h-screen bg-background">
+      <AgentChatPanel />
+
+      <div className="flex-1 min-w-0 overflow-auto">
+        {/* Header */}
+        <header className="border-b border-border">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h1 className="text-xl font-bold">BTC Options Dashboard</h1>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-call" />
+                Deribit
+              </span>
+              <span>自动刷新 30s</span>
+            </div>
           </div>
+        </header>
+
+        {/* Tab Navigation */}
+        <div className="px-6 pt-4">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ModuleId)}>
+            <TabsList>
+              {MODULES.map((m) => (
+                <TabsTrigger key={m.id} value={m.id}>
+                  {m.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <TabsContent value="overview">
+              <MemoMarketOverview />
+            </TabsContent>
+            <TabsContent value="volatility">
+              <MemoVolatilityAnalysis />
+            </TabsContent>
+            <TabsContent value="positions">
+              <MemoPositionStructure />
+            </TabsContent>
+            <TabsContent value="sentiment">
+              <MemoFundingSentiment />
+            </TabsContent>
+            <TabsContent value="expiry">
+              <MemoExpiryAnalysis />
+            </TabsContent>
+            <TabsContent value="oi">
+              <MemoOIDistribution />
+            </TabsContent>
+          </Tabs>
         </div>
-      </header>
-
-      {/* Tab Navigation */}
-      <div className="px-6 pt-4">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ModuleId)}>
-          <TabsList>
-            {MODULES.map((m) => (
-              <TabsTrigger key={m.id} value={m.id}>
-                {m.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="overview">
-            <MemoMarketOverview />
-          </TabsContent>
-          <TabsContent value="volatility">
-            <MemoVolatilityAnalysis />
-          </TabsContent>
-          <TabsContent value="positions">
-            <MemoPositionStructure />
-          </TabsContent>
-          <TabsContent value="sentiment">
-            <MemoFundingSentiment />
-          </TabsContent>
-          <TabsContent value="expiry">
-            <MemoExpiryAnalysis />
-          </TabsContent>
-          <TabsContent value="oi">
-            <MemoOIDistribution />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   )
