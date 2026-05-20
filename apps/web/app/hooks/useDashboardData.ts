@@ -22,3 +22,9 @@ export function useHistoricalVolatility(currency: string) {
     trpc.deribit.historicalVolatility.queryOptions({ currency }),
   );
 }
+
+export function useOIDistribution(currency: string, expiry?: string) {
+  return useQuery(
+    trpc.deribit.oiDistribution.queryOptions({ currency, expiry }),
+  );
+}
