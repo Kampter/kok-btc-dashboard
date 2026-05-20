@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { DeribitService } from '../deribit/deribit.service';
+import { ChatRouter } from '../chat/chat.router';
 import {
   MarketOverviewSchema,
   OptionSummarySchema,
@@ -25,10 +26,20 @@ function handleTrpcError(context: string, error: unknown): never {
 
 @Injectable()
 export class TrpcService {
-  constructor(private readonly deribitService: DeribitService) {}
+  public readonly appRouter: ReturnType<typeof t.router>;
 
-  public readonly appRouter = t.router({
-    deribit: t.router({
+  constructor(
+    private readonly deribitService: DeribitService,
+    private readonly chatRouter: ChatRouter,
+  ) {
+    this.appRouter = t.router({
+      deribit: this.buildDeribitRouter(),
+      chat: this.chatRouter.router,
+    });
+  }
+
+  private buildDeribitRouter() {
+    return t.router({
       marketOverview: t.procedure.query(async () => {
         try {
           const [bookData, indexData] = await Promise.all([
@@ -361,6 +372,6 @@ export class TrpcService {
             handleTrpcError('Failed to fetch OI distribution data', error);
           }
         }),
-    }),
-  });
+    });
+  }
 }
