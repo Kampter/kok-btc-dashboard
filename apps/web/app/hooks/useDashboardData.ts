@@ -23,8 +23,13 @@ export function useHistoricalVolatility(currency: string) {
   );
 }
 
-export function useOIDistribution(currency: string, expiry?: string) {
-  return useQuery(
-    trpc.deribit.oiDistribution.queryOptions({ currency, expiry }),
-  );
+export function useOIDistribution(
+  currency: string,
+  expiry?: string,
+  enabled = true,
+) {
+  return useQuery({
+    ...trpc.deribit.oiDistribution.queryOptions({ currency, expiry }),
+    enabled,
+  });
 }

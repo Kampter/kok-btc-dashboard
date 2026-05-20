@@ -11,7 +11,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   Legend,
 } from 'recharts';
 
@@ -53,7 +52,7 @@ export function OIDistribution() {
     isLoading: expiryLoading,
     isError: expiryError,
     refetch: refetchExpiry,
-  } = useOIDistribution('BTC', selectedExpiry || undefined);
+  } = useOIDistribution('BTC', selectedExpiry || undefined, !!selectedExpiry);
 
   const isLoading = listLoading || expiryLoading;
   const isError = listError || expiryError;
@@ -83,7 +82,7 @@ export function OIDistribution() {
         <Card className="animate-pulse">
           <CardContent className="h-16" />
         </Card>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="h-24" />
@@ -140,7 +139,7 @@ export function OIDistribution() {
 
       {/* Metrics Cards */}
       {distribution && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -180,7 +179,7 @@ export function OIDistribution() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>
+              <div className="text-2xl font-bold text-warning">
                 {formatUSD(distribution.max_pain)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -225,16 +224,8 @@ export function OIDistribution() {
                   ]}
                 />
                 <Legend />
-                <Bar dataKey="call_oi" name="Call OI" fill={CALL_COLOR} radius={[0, 2, 2, 0]}>
-                  {chartData.map((_, index) => (
-                    <Cell key={`call-${index}`} fill={CALL_COLOR} />
-                  ))}
-                </Bar>
-                <Bar dataKey="put_oi" name="Put OI" fill={PUT_COLOR} radius={[2, 0, 0, 2]}>
-                  {chartData.map((_, index) => (
-                    <Cell key={`put-${index}`} fill={PUT_COLOR} />
-                  ))}
-                </Bar>
+                <Bar dataKey="call_oi" name="Call OI" fill={CALL_COLOR} radius={[0, 2, 2, 0]} />
+                <Bar dataKey="put_oi" name="Put OI" fill={PUT_COLOR} radius={[2, 0, 0, 2]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

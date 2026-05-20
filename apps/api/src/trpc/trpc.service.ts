@@ -11,6 +11,8 @@ import {
   getOptionTypeFromInstrumentName,
 } from '@kok/shared-types';
 
+const BTC_CONTRACT_SIZE = 0.001;
+
 const t = initTRPC.create();
 
 function handleTrpcError(context: string, error: unknown): never {
@@ -35,14 +37,12 @@ export class TrpcService {
           ]);
 
           const btcPrice = indexData.index_price ?? 0;
-          const contractSize = 0.001; // BTC contract size on Deribit
-
           const totalOI = bookData.reduce(
-            (sum, item) => sum + ((item.open_interest as number) ?? 0) * btcPrice * contractSize,
+            (sum, item) => sum + ((item.open_interest as number) ?? 0) * btcPrice * BTC_CONTRACT_SIZE,
             0,
           );
           const totalVolume24h = bookData.reduce(
-            (sum, item) => sum + ((item.volume as number) ?? 0) * btcPrice * contractSize,
+            (sum, item) => sum + ((item.volume as number) ?? 0) * btcPrice * BTC_CONTRACT_SIZE,
             0,
           );
 
@@ -207,8 +207,7 @@ export class TrpcService {
 
               const oi = (raw.open_interest as number) ?? 0;
               const underlyingPrice = (raw.underlying_price as number) ?? spotPrice;
-              const contractSize = 0.001;
-              const oiUsd = oi * underlyingPrice * contractSize;
+              const oiUsd = oi * underlyingPrice * BTC_CONTRACT_SIZE;
 
               items.push({ expiryIso, strike, optionType, oi, oiUsd });
             }
