@@ -12,7 +12,8 @@ import {
   getOptionTypeFromInstrumentName,
 } from '@kok/shared-types';
 
-const BTC_CONTRACT_SIZE = 0.001;
+// Deribit BTC option contract multiplier is 1 BTC per contract
+const CONTRACT_MULTIPLIER = 1;
 
 const t = initTRPC.create();
 
@@ -49,11 +50,11 @@ export class TrpcService {
 
           const btcPrice = indexData.index_price ?? 0;
           const totalOI = bookData.reduce(
-            (sum, item) => sum + ((item.open_interest as number) ?? 0) * btcPrice * BTC_CONTRACT_SIZE,
+            (sum, item) => sum + ((item.open_interest as number) ?? 0) * btcPrice * CONTRACT_MULTIPLIER,
             0,
           );
           const totalVolume24h = bookData.reduce(
-            (sum, item) => sum + ((item.volume as number) ?? 0) * btcPrice * BTC_CONTRACT_SIZE,
+            (sum, item) => sum + ((item.volume as number) ?? 0) * btcPrice * CONTRACT_MULTIPLIER,
             0,
           );
 
@@ -218,7 +219,7 @@ export class TrpcService {
 
               const oi = (raw.open_interest as number) ?? 0;
               const underlyingPrice = (raw.underlying_price as number) ?? spotPrice;
-              const oiUsd = oi * underlyingPrice * BTC_CONTRACT_SIZE;
+              const oiUsd = oi * underlyingPrice * CONTRACT_MULTIPLIER;
 
               items.push({ expiryIso, strike, optionType, oi, oiUsd });
             }

@@ -8,9 +8,13 @@ export class ChatService {
   private readonly openai: OpenAI;
 
   constructor() {
+    const apiKey = process.env.MOONSHOT_API_KEY;
+    if (!apiKey) {
+      throw new Error('MOONSHOT_API_KEY environment variable is not set');
+    }
     this.openai = new OpenAI({
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
-      baseURL: 'https://api.anthropic.com/v1/',
+      apiKey,
+      baseURL: 'https://api.moonshot.cn/v1',
     });
   }
 
@@ -29,7 +33,7 @@ export class ChatService {
 
     try {
       const stream = await this.openai.chat.completions.create({
-        model: 'claude-sonnet-4-6',
+        model: 'kimi-k2.6',
         messages: chatMessages,
         stream: true,
         max_tokens: 4096,
