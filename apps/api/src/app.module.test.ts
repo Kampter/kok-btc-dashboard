@@ -5,6 +5,7 @@ import { AppModule } from './app.module'
 describe('AppModule', () => {
   beforeEach(() => {
     vi.stubEnv('DATABASE_URL', 'postgresql://test:test@localhost:5432/test')
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
   })
 
   afterEach(() => {
