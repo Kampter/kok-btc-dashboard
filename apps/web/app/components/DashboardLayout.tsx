@@ -5,6 +5,7 @@ import { VolatilityAnalysis } from './modules/VolatilityAnalysis'
 import { PositionStructure } from './modules/PositionStructure'
 import { FundingSentiment } from './modules/FundingSentiment'
 import { ExpiryAnalysis } from './modules/ExpiryAnalysis'
+import { OIDistribution } from './modules/OIDistribution'
 
 const MODULES = [
   { id: 'overview', label: '市场概况' },
@@ -12,6 +13,7 @@ const MODULES = [
   { id: 'positions', label: '持仓结构' },
   { id: 'sentiment', label: '资金情绪' },
   { id: 'expiry', label: '到期分析' },
+  { id: 'oi', label: 'OI 分布' },
 ] as const
 
 type ModuleId = (typeof MODULES)[number]['id']
@@ -21,6 +23,7 @@ const MemoVolatilityAnalysis = memo(VolatilityAnalysis)
 const MemoPositionStructure = memo(PositionStructure)
 const MemoFundingSentiment = memo(FundingSentiment)
 const MemoExpiryAnalysis = memo(ExpiryAnalysis)
+const MemoOIDistribution = memo(OIDistribution)
 
 export function DashboardLayout() {
   const [activeTab, setActiveTab] = useState<ModuleId>('overview')
@@ -66,6 +69,9 @@ export function DashboardLayout() {
           </TabsContent>
           <TabsContent value="expiry">
             <MemoExpiryAnalysis />
+          </TabsContent>
+          <TabsContent value="oi">
+            <MemoOIDistribution />
           </TabsContent>
         </Tabs>
       </div>
