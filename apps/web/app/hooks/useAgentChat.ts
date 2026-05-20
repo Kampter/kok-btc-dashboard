@@ -53,7 +53,7 @@ export function useAgentChat(context: DashboardContext) {
         setIsLoading(false);
       }
     },
-    [messages, context],
+    [context],
   );
 
   return {

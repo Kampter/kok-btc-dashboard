@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
-import { ChatService } from './chat.service.js';
+import { ChatService } from './chat.service';
 
 const t = initTRPC.create();
 
 @Injectable()
-export class ChatController {
+export class ChatRouter {
   constructor(private readonly chatService: ChatService) {}
 
   public readonly router = t.router({
@@ -27,7 +27,7 @@ export class ChatController {
           }),
         }),
       )
-      .mutation(async function* (this: ChatController, { input }) {
+      .mutation(async function* (this: ChatRouter, { input }) {
         yield* this.chatService.streamChat(input.messages, input.context);
       }),
   });

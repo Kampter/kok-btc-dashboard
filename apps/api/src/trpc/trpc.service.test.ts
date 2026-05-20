@@ -1,22 +1,27 @@
 import { Test } from '@nestjs/testing'
-import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { TRPCError } from '@trpc/server'
 import { TrpcService } from './trpc.service'
 import { DeribitService } from '../deribit/deribit.service'
-import { ChatController } from '../chat/chat.controller.js'
-import { ChatService } from '../chat/chat.service.js'
+import { ChatRouter } from '../chat/chat.router'
+import { ChatService } from '../chat/chat.service'
 import { rawBookSummaryBTC, rawIndexPriceBTC, rawHistoricalVolatilityBTC, rawTradesBTC } from '@kok/shared-types/fixtures'
 
-beforeAll(() => {
-  process.env.ANTHROPIC_API_KEY = 'test-key'
-})
-
 describe('TrpcService', () => {
+  beforeAll(() => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
+  })
+
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+
   async function createCaller() {
     const moduleRef = await Test.createTestingModule({
       providers: [
         TrpcService,
-        ChatController,
+        ChatRouter,
         ChatService,
         {
           provide: DeribitService,

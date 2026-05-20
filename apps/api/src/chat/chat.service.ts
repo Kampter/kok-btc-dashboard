@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { buildSystemPrompt, type DashboardContext } from './prompts/system-prompt.js';
+import { buildSystemPrompt, type DashboardContext } from './prompts/system-prompt';
 
 @Injectable()
 export class ChatService {

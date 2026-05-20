@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ChatService } from './chat.service.js';
+import { ChatService } from './chat.service';
 
 vi.mock('openai', () => {
   return {
@@ -15,13 +15,13 @@ vi.mock('openai', () => {
 
 describe('ChatService', () => {
   it('should be instantiable', () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
     const service = new ChatService();
     expect(service).toBeInstanceOf(ChatService);
   });
 
   it('should yield error when API key is missing', async () => {
-    const originalKey = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = '';
+    vi.stubEnv('ANTHROPIC_API_KEY', '');
 
     const service = new ChatService();
     const generator = service.streamChat(
@@ -36,7 +36,5 @@ describe('ChatService', () => {
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]).toHaveProperty('type', 'error');
-
-    process.env.ANTHROPIC_API_KEY = originalKey;
   });
 });
