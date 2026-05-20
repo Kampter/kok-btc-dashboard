@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { DatabaseModule } from './database/database.module';
 import { DeribitModule } from './deribit/deribit.module';
 import { TrpcModule } from './trpc/trpc.module';
+import { ChatModule } from './chat/chat.module.js';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TrpcModule } from './trpc/trpc.module';
     DatabaseModule,
     DeribitModule,
     TrpcModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
