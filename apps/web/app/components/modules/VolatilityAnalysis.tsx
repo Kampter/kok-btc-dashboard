@@ -101,7 +101,7 @@ export function VolatilityAnalysis() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={skewData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="moneyness" stroke="#94a3b8" fontSize={12} />
+              <XAxis dataKey="moneyness" stroke="#94a3b8" fontSize={12} label={{ value: '行权价 / 现货价', position: 'insideBottom', offset: -2, fill: '#94a3b8', fontSize: 12 }} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
               <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
               <Line type="monotone" dataKey="iv" name="IV" stroke="#4ade80" strokeWidth={2} dot={{ fill: '#4ade80', r: 4 }} />
