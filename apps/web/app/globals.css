@@ -1,24 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0f172a;
-  --color-foreground: #f8fafc;
-  --color-card: #1e293b;
-  --color-card-foreground: #f8fafc;
+  --color-background: #08080a;
+  --color-foreground: #f4f4f5;
+  --color-card: #121214;
+  --color-card-foreground: #f4f4f5;
   --color-primary: #e94560;
   --color-primary-foreground: #ffffff;
-  --color-muted: #334155;
-  --color-muted-foreground: #94a3b8;
-  --color-border: #334155;
+  --color-muted: #27272a;
+  --color-muted-foreground: #71717a;
+  --color-border: #27272a;
   --color-ring: #e94560;
-  --color-call: #4ade80;
-  --color-put: #e94560;
+  --color-call: #22c55e;
+  --color-put: #ef4444;
   --color-warning: #f59e0b;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 }
 
 @layer base {
   body {
+    font-family: 'Geist Variable', system-ui, sans-serif;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

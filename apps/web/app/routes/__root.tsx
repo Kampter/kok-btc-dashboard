@@ -7,6 +7,7 @@ import {
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '../lib/trpc'
 import appCss from '../globals.css?url'
+import '@fontsource-variable/geist/index.css'
 
 export const Route = createRootRoute({
   head: () => ({

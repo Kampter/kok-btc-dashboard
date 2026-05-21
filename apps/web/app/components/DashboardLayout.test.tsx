@@ -1,25 +1,31 @@
-import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
 import { DashboardLayout } from './DashboardLayout'
 
+vi.mock('./chat/AgentChatPanel', () => ({
+  AgentChatPanel: () => <div data-testid="chat-panel">Chat</div>,
+}))
+
+vi.mock('./OverviewGrid', () => ({
+  OverviewGrid: ({ onModuleClick }: any) => (
+    <div data-testid="overview-grid">
+      <button data-testid="market-card" onClick={() => onModuleClick('overview')}>市场概况</button>
+      <button data-testid="volatility-card" onClick={() => onModuleClick('volatility')}>波动率</button>
+    </div>
+  ),
+}))
+
+vi.mock('./ModuleDrawer', () => ({
+  ModuleDrawer: ({ moduleId, onClose, children }: any) => (
+    moduleId ? <div data-testid="drawer"><button onClick={onClose}>关闭</button>{children}</div> : null
+  ),
+}))
+
 vi.mock('./modules/MarketOverview', () => ({
-  MarketOverview: () => <div data-testid="market-overview">MarketOverview</div>,
+  MarketOverview: () => <div data-testid="market-detail">市场详情</div>,
 }))
-
 vi.mock('./modules/VolatilityAnalysis', () => ({
-  VolatilityAnalysis: () => <div data-testid="volatility">Volatility</div>,
-}))
-
-vi.mock('./modules/PositionStructure', () => ({
-  PositionStructure: () => <div data-testid="positions">PositionStructure</div>,
-}))
-
-vi.mock('./modules/FundingSentiment', () => ({
-  FundingSentiment: () => <div data-testid="sentiment">FundingSentiment</div>,
-}))
-
-vi.mock('./modules/ExpiryAnalysis', () => ({
-  ExpiryAnalysis: () => <div data-testid="expiry">ExpiryAnalysis</div>,
+  VolatilityAnalysis: () => <div data-testid="volatility-detail">波动率详情</div>,
 }))
 
 describe('DashboardLayout', () => {
@@ -28,66 +34,21 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('BTC Options Dashboard')).toBeInTheDocument()
   })
 
-  it('renders Deribit connection status', () => {
+  it('renders overview grid', () => {
     render(<DashboardLayout />)
-    expect(screen.getByText('Deribit')).toBeInTheDocument()
+    expect(screen.getByTestId('overview-grid')).toBeInTheDocument()
   })
 
-  it('renders all 5 tabs', () => {
+  it('opens drawer when card is clicked', () => {
     render(<DashboardLayout />)
-    expect(screen.getByText('市场概况')).toBeInTheDocument()
-    expect(screen.getByText('波动率分析')).toBeInTheDocument()
-    expect(screen.getByText('持仓结构')).toBeInTheDocument()
-    expect(screen.getByText('资金情绪')).toBeInTheDocument()
-    expect(screen.getByText('到期分析')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('market-card'))
+    expect(screen.getByTestId('market-detail')).toBeInTheDocument()
   })
 
-  it('default active tab is 市场概况', () => {
+  it('closes drawer when close button is clicked', () => {
     render(<DashboardLayout />)
-    expect(screen.getByTestId('market-overview')).toBeInTheDocument()
-  })
-
-  it('clicking tab changes active content', () => {
-    render(<DashboardLayout />)
-
-    // 默认显示市场概况
-    expect(screen.getByTestId('market-overview')).toBeInTheDocument()
-    expect(screen.queryByTestId('volatility')).not.toBeInTheDocument()
-
-    // 点击波动率分析
-    fireEvent.click(screen.getByText('波动率分析'))
-    expect(screen.queryByTestId('market-overview')).not.toBeInTheDocument()
-    expect(screen.getByTestId('volatility')).toBeInTheDocument()
-
-    // 点击持仓结构
-    fireEvent.click(screen.getByText('持仓结构'))
-    expect(screen.queryByTestId('volatility')).not.toBeInTheDocument()
-    expect(screen.getByTestId('positions')).toBeInTheDocument()
-
-    // 点击资金情绪
-    fireEvent.click(screen.getByText('资金情绪'))
-    expect(screen.queryByTestId('positions')).not.toBeInTheDocument()
-    expect(screen.getByTestId('sentiment')).toBeInTheDocument()
-
-    // 点击到期分析
-    fireEvent.click(screen.getByText('到期分析'))
-    expect(screen.queryByTestId('sentiment')).not.toBeInTheDocument()
-    expect(screen.getByTestId('expiry')).toBeInTheDocument()
-  })
-
-  it('renders all memo-wrapped components', () => {
-    render(<DashboardLayout />)
-    // 默认只渲染 market-overview，通过切换 tab 验证所有组件都能渲染
-    fireEvent.click(screen.getByText('波动率分析'))
-    expect(screen.getByTestId('volatility')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('持仓结构'))
-    expect(screen.getByTestId('positions')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('资金情绪'))
-    expect(screen.getByTestId('sentiment')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('到期分析'))
-    expect(screen.getByTestId('expiry')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('market-card'))
+    fireEvent.click(screen.getByRole('button', { name: /关闭/i }))
+    expect(screen.queryByTestId('market-detail')).not.toBeInTheDocument()
   })
 })
