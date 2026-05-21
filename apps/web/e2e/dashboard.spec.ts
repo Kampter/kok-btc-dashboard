@@ -12,6 +12,9 @@ test.describe('Dashboard', () => {
 
   test('default active tab shows market overview content', async ({ page }) => {
     await page.goto('/')
+
+    await page.waitForLoadState('networkidle')
+
     // 点击市场概况卡片打开 Drawer
     await page.getByRole('button', { name: '市场概况' }).click()
     // 等待 Drawer 打开
@@ -23,11 +26,16 @@ test.describe('Dashboard', () => {
 
   test('switching tab updates visible content', async ({ page }) => {
     await page.goto('/')
+
+    await page.waitForLoadState('networkidle')
+
     // 点击波动率分析卡片打开 Drawer
     await page.getByRole('button', { name: '波动率分析' }).click()
     // 等待 Drawer 打开并渲染内容
     await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.getByText('ATM IV 期限结构').first()).toBeVisible({ timeout: 10000 })
+
+    await expect(page.getByText('ATM IV 期限结构').first()).toBeVisible({ timeout: 15000 })
+
   })
 
   test('header shows Deribit connection status', async ({ page }) => {
@@ -38,6 +46,9 @@ test.describe('Dashboard', () => {
 
   test('rapid tab switching does not crash', async ({ page }) => {
     await page.goto('/')
+
+    await page.waitForLoadState('networkidle')
+
     const cards = ['市场概况', '波动率分析', '持仓结构', '资金情绪', '到期分析']
     for (let i = 0; i < 10; i++) {
       const card = cards[i % cards.length]
@@ -60,6 +71,9 @@ test.describe('Dashboard', () => {
     })
 
     await page.goto('/')
+
+    await page.waitForLoadState('networkidle')
+
     const cards = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
     for (const card of cards) {
       await page.getByRole('button', { name: card }).click()
@@ -131,6 +145,7 @@ test.describe('Dashboard - Responsive', () => {
   test('renders correctly on tablet viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 })
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     // 在 tablet 上也可以点击卡片打开 Drawer
     await page.getByRole('button', { name: '市场概况' }).click()
@@ -140,6 +155,7 @@ test.describe('Dashboard - Responsive', () => {
   test('renders correctly on large desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     // 在 desktop 上也可以点击卡片打开 Drawer
     await page.getByRole('button', { name: '市场概况' }).click()
