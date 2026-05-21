@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { OptionSummary, MarketOverview } from '../schemas/option.js';
 import type { OptionTrade } from '../schemas/trade.js';
 import type { OIDistributionList } from '../schemas/oi-distribution.js';
+import type { GreeksExposure } from '../schemas/greeks.js';
 
 const t = initTRPC.create();
 
@@ -52,6 +53,12 @@ export const appRouter = t.router({
       .mutation(async function* () {
         yield { type: 'text' as const, text: '' };
       }),
+  }),
+
+  greeks: t.router({
+    exposure: t.procedure
+      .input(z.object({ currency: z.string().default('BTC') }))
+      .query(async () => ({} as GreeksExposure)),
   }),
 });
 
