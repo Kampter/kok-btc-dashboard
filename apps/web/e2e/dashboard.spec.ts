@@ -12,6 +12,11 @@ test.describe('Dashboard', () => {
 
   test('default active tab shows market overview content', async ({ page }) => {
     await page.goto('/')
+    // Debug: wait for tRPC response and log status/body
+    const response = await page.waitForResponse((resp) => resp.url().includes('/trpc/deribit.marketOverview'), { timeout: 15000 })
+    console.log('marketOverview status:', response.status())
+    const text = await response.text()
+    console.log('marketOverview body:', text.substring(0, 500))
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
   })
