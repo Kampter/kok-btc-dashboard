@@ -25,6 +25,17 @@ pnpm lint             # 全量 lint
 pnpm typecheck        # 全量类型检查
 ```
 
+## Spec / Plan 参考规则
+
+任何开发任务开始前，必须先查阅 `docs/superpowers/specs/` 和 `docs/superpowers/plans/` 下的相关文档。这包括但不限于：
+
+- **开发**：依据 spec 的需求定义和 plan 的实施步骤编写代码
+- **测试**：对照 spec 中的验收标准设计测试用例
+- **代码审查（PR review）**：逐条核对 spec 和 plan，确认功能已开发全面且无遗漏
+- **调试**：参考 plan 中的架构决策和约束条件定位问题
+
+若不存在对应的 spec 或 plan，则按任务性质触发下方的 skill 流程来产出。
+
 ## 开发流程（渐进式 Skill 加载）
 
 以下不是必须严格执行的流水线，而是根据任务性质 **按需触发** 的技能集合。系统会在合适时机自动加载对应 skill，不需要手动记忆。
