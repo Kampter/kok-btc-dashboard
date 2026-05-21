@@ -121,6 +121,7 @@ jobs:
         run: pnpm test:run
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kok_cache
+          MOONSHOT_API_KEY: dummy-api-key-for-ci-tests
 
   # Job 5: Lint
   lint:
@@ -176,3 +177,4 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kok_cache
           FRONTEND_URL: http://localhost:5173
+          MOONSHOT_API_KEY: dummy-api-key-for-e2e

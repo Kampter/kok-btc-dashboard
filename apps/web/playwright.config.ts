@@ -24,10 +24,11 @@ export default defineConfig({
     {
       command: 'node dist/main.js',
       cwd: path.resolve(__dirname, '../api'),
-      stdout: 'API server running on http://localhost:3000',
+      url: 'http://localhost:3000/health',
       env: {
         DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/kok_cache',
         FRONTEND_URL: 'http://localhost:5173',
+        MOONSHOT_API_KEY: process.env.MOONSHOT_API_KEY || 'dummy-api-key-for-e2e',
       },
       timeout: 120000,
     },
