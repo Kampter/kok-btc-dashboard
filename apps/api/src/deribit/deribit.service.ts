@@ -17,6 +17,27 @@ export interface BookSummaryItem {
   [key: string]: unknown;
 }
 
+export interface Instrument {
+  instrument_name: string;
+}
+
+export interface TickerGreeks {
+  delta: number;
+  gamma: number;
+  vega: number;
+  theta: number;
+  rho: number;
+}
+
+export interface TickerResponse {
+  instrument_name: string;
+  strike: number;
+  option_type: 'C' | 'P';
+  open_interest: number;
+  underlying_price: number;
+  greeks: TickerGreeks;
+}
+
 @Injectable()
 export class DeribitService {
   private readonly client = axios.create({
@@ -129,6 +150,32 @@ export class DeribitService {
         });
         return data.result as { trades: Array<Record<string, unknown>> };
       },
+    );
+  }
+
+  async getInstruments(currency: string, kind: string): Promise<Instrument[]> {
+    return this.fetchWithCache<Instrument[]>(
+      `instruments_${currency}_${kind}`,
+      async () => {
+        const { data } = await this.client.get('/get_instruments', {
+          params: { currency, kind, expired: false },
+        });
+        return data.result as Instrument[];
+      },
+      900000,
+    );
+  }
+
+  async getTicker(instrumentName: string): Promise<TickerResponse> {
+    return this.fetchWithCache<TickerResponse>(
+      `ticker_${instrumentName}`,
+      async () => {
+        const { data } = await this.client.get('/ticker', {
+          params: { instrument_name: instrumentName },
+        });
+        return data.result as TickerResponse;
+      },
+      30000, // 30 seconds TTL for Greeks data
     );
   }
 }
