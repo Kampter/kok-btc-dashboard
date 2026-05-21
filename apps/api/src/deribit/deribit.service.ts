@@ -6,6 +6,17 @@ import { PersistentCacheService } from '../database/persistent-cache.service';
 
 const DERIBIT_API_URL = 'https://www.deribit.com/api/v2/public';
 
+export interface BookSummaryItem {
+  instrument_name: string;
+  open_interest: number;
+  volume_usd: number;
+  underlying_price: number;
+  mark_iv: number;
+  bid_iv: number;
+  ask_iv: number;
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class DeribitService {
   private readonly client = axios.create({
@@ -66,14 +77,14 @@ export class DeribitService {
     }
   }
 
-  async getBookSummaryByCurrency(currency: string, kind: string) {
-    return this.fetchWithCache(
+  async getBookSummaryByCurrency(currency: string, kind: string): Promise<BookSummaryItem[]> {
+    return this.fetchWithCache<BookSummaryItem[]>(
       `book_summary_${currency}_${kind}`,
       async () => {
         const { data } = await this.client.get('/get_book_summary_by_currency', {
           params: { currency, kind },
         });
-        return data.result as Array<Record<string, unknown>>;
+        return data.result as BookSummaryItem[];
       },
     );
   }
