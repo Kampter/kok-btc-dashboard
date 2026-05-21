@@ -46,6 +46,11 @@ export function groupByTenor(items: OptionSummary[]): Map<Tenor, OptionSummary[]
       if (diff < bestDiff) {
         bestDiff = diff;
         bestExpiry = expiry;
+      } else if (diff === bestDiff && bestExpiry) {
+        // Tie-breaking: 优先选天数更长的到期日
+        if (days > (expiryDays.get(bestExpiry) ?? 0)) {
+          bestExpiry = expiry;
+        }
       }
     }
 

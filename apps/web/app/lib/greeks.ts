@@ -40,7 +40,10 @@ export function blackScholesD1(
   sigma: number,
   r = 0,
 ): number {
-  if (T <= 0 || sigma <= 0 || S <= 0 || K <= 0) {
+  if (sigma <= 0 || S <= 0 || K <= 0) {
+    return NaN;
+  }
+  if (T <= 0) {
     return S >= K ? Infinity : -Infinity;
   }
 
@@ -82,16 +85,18 @@ export function putDelta(
  * 根据 OptionSummary 计算期权 Delta
  * mark_iv 是百分比形式（如 62.34），内部转换为小数
  * r 默认 0（crypto 期权无风险利率近似为 0）
+ * @param referenceTime - 可选基准时间戳（毫秒），默认 Date.now()
  */
 export function optionDelta(
   item: OptionSummary,
   r = 0,
+  referenceTime = Date.now(),
 ): number {
   const S = item.underlying_price;
   const K = item.strike;
   const sigma = item.mark_iv / 100;
   const T =
-    (new Date(item.expiry).getTime() - Date.now()) /
+    (new Date(item.expiry).getTime() - referenceTime) /
     (1000 * 60 * 60 * 24 * 365);
 
   if (item.option_type === 'C') {

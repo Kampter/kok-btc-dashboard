@@ -26,6 +26,8 @@ export const VolatilityOverviewCard = memo(function VolatilityOverviewCard({
     ? skew1M > 0 ? '偏恐惧' : skew1M < 0 ? '偏乐观' : '中性'
     : undefined
 
+  // Skew > 0 表示 Put IV 更高 = 市场恐惧看跌 = 负面信号（红色）
+  // Skew < 0 表示 Call IV 更高 = 市场乐观看涨 = 正面信号（绿色）
   const changeType = skew1M !== null
     ? skew1M > 0 ? 'negative' : skew1M < 0 ? 'positive' : 'neutral'
     : undefined
