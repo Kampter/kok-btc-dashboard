@@ -50,6 +50,10 @@ export class DeribitService {
     @Optional() private readonly persistentCache?: PersistentCacheService,
   ) {}
 
+  private isE2E(): boolean {
+    return process.env.E2E_TEST === 'true';
+  }
+
   private async fetchWithCache<T>(
     cacheKey: string,
     fetcher: () => Promise<T>,
@@ -99,6 +103,16 @@ export class DeribitService {
   }
 
   async getBookSummaryByCurrency(currency: string, kind: string): Promise<BookSummaryItem[]> {
+    if (this.isE2E()) {
+      return [
+        { instrument_name: 'BTC-30MAY26-70000-C', open_interest: 1000000, volume_usd: 50000000, underlying_price: 90000, mark_iv: 60, bid_iv: 59, ask_iv: 61, strike: 70000, option_type: 'C', expiry: 1748620800000 },
+        { instrument_name: 'BTC-30MAY26-70000-P', open_interest: 3000000, volume_usd: 80000000, underlying_price: 90000, mark_iv: 62, bid_iv: 61, ask_iv: 63, strike: 70000, option_type: 'P', expiry: 1748620800000 },
+        { instrument_name: 'BTC-30MAY26-80000-C', open_interest: 5000000, volume_usd: 120000000, underlying_price: 90000, mark_iv: 58, bid_iv: 57, ask_iv: 59, strike: 80000, option_type: 'C', expiry: 1748620800000 },
+        { instrument_name: 'BTC-30MAY26-80000-P', open_interest: 1000000, volume_usd: 30000000, underlying_price: 90000, mark_iv: 64, bid_iv: 63, ask_iv: 65, strike: 80000, option_type: 'P', expiry: 1748620800000 },
+        { instrument_name: 'BTC-30MAY26-90000-C', open_interest: 2000000, volume_usd: 60000000, underlying_price: 90000, mark_iv: 55, bid_iv: 54, ask_iv: 56, strike: 90000, option_type: 'C', expiry: 1748620800000 },
+        { instrument_name: 'BTC-30MAY26-90000-P', open_interest: 500000, volume_usd: 15000000, underlying_price: 90000, mark_iv: 66, bid_iv: 65, ask_iv: 67, strike: 90000, option_type: 'P', expiry: 1748620800000 },
+      ];
+    }
     return this.fetchWithCache<BookSummaryItem[]>(
       `book_summary_${currency}_${kind}`,
       async () => {
@@ -111,6 +125,9 @@ export class DeribitService {
   }
 
   async getIndexPrice(indexName: string) {
+    if (this.isE2E()) {
+      return { index_price: 90000, estimated_delivery_price: 89950 };
+    }
     return this.fetchWithCache(
       `index_price_${indexName}`,
       async () => {
@@ -125,6 +142,17 @@ export class DeribitService {
   }
 
   async getHistoricalVolatility(currency: string) {
+    if (this.isE2E()) {
+      return [
+        [1747468800000, 55.32],
+        [1747555200000, 56.78],
+        [1747641600000, 58.12],
+        [1747728000000, 57.45],
+        [1747814400000, 59.23],
+        [1747900800000, 60.11],
+        [1747987200000, 61.45],
+      ] as Array<[number, number]>;
+    }
     return this.fetchWithCache(
       `hist_vol_${currency}`,
       async () => {
@@ -142,6 +170,14 @@ export class DeribitService {
     kind: string,
     count = 100,
   ) {
+    if (this.isE2E()) {
+      return {
+        trades: [
+          { trade_id: 't-001', timestamp: 1747555200000, instrument_name: 'BTC-30MAY26-90000-C', direction: 'buy', amount: 50, price: 0.046, index_price: 89950 },
+          { trade_id: 't-002', timestamp: 1747555210000, instrument_name: 'BTC-30MAY26-90000-P', direction: 'sell', amount: 30, price: 0.039, index_price: 89950 },
+        ],
+      };
+    }
     return this.fetchWithCache(
       `trades_${currency}_${kind}_${count}`,
       async () => {
@@ -154,6 +190,16 @@ export class DeribitService {
   }
 
   async getInstruments(currency: string, kind: string): Promise<Instrument[]> {
+    if (this.isE2E()) {
+      return [
+        { instrument_name: 'BTC-30MAY26-70000-C' },
+        { instrument_name: 'BTC-30MAY26-70000-P' },
+        { instrument_name: 'BTC-30MAY26-80000-C' },
+        { instrument_name: 'BTC-30MAY26-80000-P' },
+        { instrument_name: 'BTC-30MAY26-90000-C' },
+        { instrument_name: 'BTC-30MAY26-90000-P' },
+      ];
+    }
     return this.fetchWithCache<Instrument[]>(
       `instruments_${currency}_${kind}`,
       async () => {
@@ -167,6 +213,16 @@ export class DeribitService {
   }
 
   async getTicker(instrumentName: string): Promise<TickerResponse> {
+    if (this.isE2E()) {
+      return {
+        instrument_name: instrumentName,
+        strike: 90000,
+        option_type: 'C',
+        open_interest: 2000000,
+        underlying_price: 90000,
+        greeks: { delta: 0.52, gamma: 0.0001, vega: 25, theta: -10, rho: 15 },
+      };
+    }
     return this.fetchWithCache<TickerResponse>(
       `ticker_${instrumentName}`,
       async () => {

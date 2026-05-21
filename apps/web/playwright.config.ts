@@ -29,6 +29,7 @@ export default defineConfig({
         DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/kok_cache',
         FRONTEND_URL: 'http://localhost:5173',
         MOONSHOT_API_KEY: process.env.MOONSHOT_API_KEY || 'dummy-api-key-for-e2e',
+        E2E_TEST: 'true',
       },
       timeout: 120000,
     },
