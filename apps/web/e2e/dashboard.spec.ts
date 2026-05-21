@@ -1,7 +1,18 @@
 import { test, expect } from '@playwright/test'
 
+async function openModule(page: any, name: string) {
+  await page.getByRole('button', { name }).click()
+  // Wait for drawer animation
+  await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 5000 })
+}
+
+async function closeModule(page: any) {
+  await page.getByRole('button', { name: '关闭' }).click()
+  await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 })
+}
+
 test.describe('Dashboard', () => {
-  test('loads with all 5 tabs visible', async ({ page }) => {
+  test('loads with all module cards visible', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     await expect(page.getByRole('button', { name: '波动率分析' })).toBeVisible()
@@ -10,22 +21,21 @@ test.describe('Dashboard', () => {
     await expect(page.getByRole('button', { name: '到期分析' })).toBeVisible()
   })
 
-  test('default active tab shows market overview content', async ({ page }) => {
+  test('market overview card opens drawer with detail content', async ({ page }) => {
     await page.goto('/')
-    await page.waitForTimeout(3000)
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML)
-    console.log('body innerHTML:', bodyHtml.substring(0, 3000))
+    await openModule(page, '市场概况')
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
   })
 
-  test('switching tab updates visible content', async ({ page }) => {
+  test('switching module updates drawer content', async ({ page }) => {
     await page.goto('/')
-    // 先确认市场概况内容可见
+    // Open market overview
+    await openModule(page, '市场概况')
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
-    // 点击波动率分析 tab
+
+    // Switch to volatility
     await page.getByRole('button', { name: '波动率分析' }).click()
-    // 波动率分析 tab 应显示 IV 相关图表（数据可能已缓存，不依赖新请求）
     await expect(page.getByText('IV 期限结构').first()).toBeVisible({ timeout: 10000 })
   })
 
@@ -35,28 +45,30 @@ test.describe('Dashboard', () => {
     await expect(page.getByText('自动刷新 30s')).toBeVisible()
   })
 
-  test('rapid tab switching does not crash', async ({ page }) => {
+  test('rapid module switching does not crash', async ({ page }) => {
     await page.goto('/')
-    const tabs = ['波动率分析', '持仓结构', '资金情绪', '到期分析', '市场概况']
+    const modules = ['波动率分析', '持仓结构', '资金情绪', '到期分析', '市场概况']
     for (let i = 0; i < 10; i++) {
-      const tab = tabs[i % tabs.length]
-      await page.getByRole('button', { name: tab }).click()
+      const mod = modules[i % modules.length]
+      await page.getByRole('button', { name: mod }).click()
     }
-    // Page should still be functional after rapid switching
+    // Page should still be functional
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
   })
 
-  test('all tabs render without console errors', async ({ page }) => {
+  test('all modules render without console errors', async ({ page }) => {
     const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
     await page.goto('/')
-    const tabs = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
-    for (const tab of tabs) {
-      await page.getByRole('button', { name: tab }).click()
-      // Playwright 自动等待 toBeVisible 会处理渲染延迟，无需硬等待
+    const modules = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
+    for (const mod of modules) {
+      await openModule(page, mod)
+      // Wait briefly for content to render
+      await page.waitForTimeout(500)
+      await closeModule(page)
     }
 
     expect(errors.filter((e) => !e.includes('favicon'))).toHaveLength(0)
@@ -71,7 +83,6 @@ test.describe('Dashboard - Hydration', () => {
     })
 
     await page.goto('/')
-    // 等待网络空闲（所有初始请求完成）后再断言
     await page.waitForLoadState('networkidle')
 
     expect(pageErrors).toHaveLength(0)
@@ -97,14 +108,16 @@ test.describe('Dashboard - Hydration', () => {
 
   test('loads real data after hydration (not all zeros)', async ({ page }) => {
     await page.goto('/')
-    // 等待第一个 tRPC 响应返回
+    // Wait for tRPC response
     await page.waitForResponse((resp) => resp.url().includes('/trpc/'), { timeout: 15000 })
-    // Playwright 的自动等待会处理渲染延迟
 
-    const btcPrice = await page.getByText(/^\$[\d,]/).first()
+    // Check overview grid shows non-zero data
+    const btcPrice = await page.getByText(/\$[\d,.]+B/).first()
     const hasNonZeroData = await btcPrice.isVisible().catch(() => false)
+    expect(hasNonZeroData).toBe(true)
 
-    // 如果 API 不可用，至少验证页面结构完整
+    // Open drawer to verify detailed content
+    await openModule(page, '市场概况')
     await expect(page.getByText('BTC 现货价格')).toBeVisible()
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
@@ -122,6 +135,8 @@ test.describe('Dashboard - Responsive', () => {
     await page.setViewportSize({ width: 768, height: 1024 })
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
+    // Open drawer and verify content on tablet
+    await openModule(page, '市场概况')
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
 
@@ -129,6 +144,8 @@ test.describe('Dashboard - Responsive', () => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
+    // Open drawer and verify content on desktop
+    await openModule(page, '市场概况')
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
 })
@@ -144,7 +161,8 @@ test.describe('Dashboard - Error States', () => {
     // Block API requests to simulate error
     await page.route('**/trpc/**', (route) => route.abort())
     await page.goto('/')
-    // Error fallback should eventually appear
+    // Error fallback should eventually appear in the drawer
+    await openModule(page, '市场概况')
     await expect(page.getByText('加载失败').first()).toBeVisible({ timeout: 10000 })
   })
 })
