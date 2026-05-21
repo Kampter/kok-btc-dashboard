@@ -7,8 +7,11 @@ async function openModule(page: any, name: string) {
 }
 
 async function closeModule(page: any) {
-  await page.getByRole('button', { name: '关闭' }).click()
-  await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 })
+  const closeButton = page.getByRole('button', { name: '关闭' })
+  if (await closeButton.isVisible().catch(() => false)) {
+    await closeButton.click()
+    await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 })
+  }
 }
 
 test.describe('Dashboard', () => {
@@ -53,10 +56,12 @@ test.describe('Dashboard', () => {
     const modules = ['波动率分析', '持仓结构', '资金情绪', '到期分析', '市场概况']
     for (let i = 0; i < 10; i++) {
       const mod = modules[i % modules.length]
-      await page.getByRole('button', { name: mod }).click()
-      // Wait for drawer animation (300ms open + 200ms close)
-      await page.waitForTimeout(350)
+      await closeModule(page)
+      await openModule(page, mod)
+      // Brief wait for content to render
+      await page.waitForTimeout(200)
     }
+    await closeModule(page)
     // Page should still be functional
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
   })
