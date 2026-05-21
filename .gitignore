@@ -7,9 +7,10 @@ build/
 .DS_Store
 coverage/
 .turbo
-# Claude Code 配置（只保留团队共享的 settings.json）
+# Claude Code 配置（保留团队共享的 settings.json 和 skills）
 .claude/*
 !.claude/settings.json
+!.claude/skills/
 .superpowers/
 
 # tsc --watch 在 src 目录生成的中间产物（shared-types tsconfig 未配置 outDir 时）

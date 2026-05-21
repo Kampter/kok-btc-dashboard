@@ -39,6 +39,14 @@ pnpm typecheck        # 全量类型检查
 
 ## 子目录文档
 
-- [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md) — 前端架构、UI Stack、文件结构
-- [`apps/api/CLAUDE.md`](apps/api/CLAUDE.md) — 后端架构、NestJS 模块、API 设计
-- [`packages/shared-types/CLAUDE.md`](packages/shared-types/CLAUDE.md) — 共享类型、包边界、Schema 规范
+各目录的详细架构决策通过以下方式获取：
+
+- **Skills**（按需加载）：
+  - `/web-frontend` — 前端架构、UI Stack、文件结构
+  - `/api-backend` — 后端架构、NestJS 模块、API 设计
+  - `/shared-types` — 共享类型、包边界、Schema 规范
+
+- **子目录 `CLAUDE.md`**（自动加载）：
+  - [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md)
+  - [`apps/api/CLAUDE.md`](apps/api/CLAUDE.md)
+  - [`packages/shared-types/CLAUDE.md`](packages/shared-types/CLAUDE.md)
