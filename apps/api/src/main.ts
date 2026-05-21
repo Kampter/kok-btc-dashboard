@@ -32,5 +32,6 @@ async function bootstrap() {
 
   await app.listen(PORT);
   console.log(`API server running on http://localhost:${PORT}`);
+  console.log(`E2E_TEST=${process.env.E2E_TEST}`);
 }
 bootstrap();

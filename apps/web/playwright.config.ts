@@ -25,6 +25,8 @@ export default defineConfig({
       command: 'node dist/main.js',
       cwd: path.resolve(__dirname, '../api'),
       url: 'http://localhost:3000/health',
+      stdout: 'pipe',
+      stderr: 'pipe',
       env: {
         DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/kok_cache',
         FRONTEND_URL: 'http://localhost:5173',
