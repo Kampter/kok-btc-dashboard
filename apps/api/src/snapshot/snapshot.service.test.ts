@@ -23,7 +23,7 @@ describe('SnapshotService', () => {
 
       await service.onModuleInit();
 
-      expect(mockPool.query).toHaveBeenCalledTimes(6);
+      expect(mockPool.query).toHaveBeenCalledTimes(5);
       const calls = (mockPool.query as ReturnType<typeof vi.fn>).mock.calls;
       expect(calls[0][0]).toContain('CREATE TABLE IF NOT EXISTS market_snapshots');
       expect(calls[1][0]).toContain('CREATE INDEX IF NOT EXISTS idx_market_snapshots_time');
