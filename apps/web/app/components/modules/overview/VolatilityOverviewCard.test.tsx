@@ -6,6 +6,21 @@ vi.mock('../../../hooks/useDashboardData', () => ({
   useBookSummary: vi.fn(),
 }))
 
+vi.mock('../../../lib/greeks', () => ({
+  optionDelta: vi.fn((item: { strike: number; option_type: string }) => {
+    // Deterministic mock: return deltas that match target values for testing
+    // 85000-P → -0.25 (nearest to -0.25 target)
+    // 96000-C → 0.25 (nearest to +0.25 target)
+    // 90000-C → 0.52 (ATM)
+    // 90000-P → -0.48 (ATM)
+    if (item.strike === 85000 && item.option_type === 'P') return -0.25
+    if (item.strike === 96000 && item.option_type === 'C') return 0.25
+    if (item.strike === 90000 && item.option_type === 'C') return 0.52
+    if (item.strike === 90000 && item.option_type === 'P') return -0.48
+    return 0
+  }),
+}))
+
 import { useBookSummary } from '../../../hooks/useDashboardData'
 
 describe('VolatilityOverviewCard', () => {
@@ -71,10 +86,10 @@ describe('VolatilityOverviewCard', () => {
     } as any)
   })
 
-  it('renders 1M 25Δ Skew value', () => {
+  it('renders 1M 25Δ Skew value and sentiment label', () => {
     render(<VolatilityOverviewCard onClick={vi.fn()} />)
-    // 1M Skew = Put IV(85000-P, ~-0.27 delta) - Call IV(96000-C, ~0.27 delta)
-    // = 65.50 - 64.12 = 1.38
+    // With mocked deltas: 85000-P has delta -0.25, 96000-C has delta 0.25
+    // Skew = Put IV(85000-P) - Call IV(96000-C) = 65.50 - 64.12 = 1.38
     expect(screen.getByText('1.38%')).toBeInTheDocument()
     expect(screen.getByText('偏恐惧')).toBeInTheDocument()
   })

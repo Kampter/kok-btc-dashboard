@@ -9,12 +9,16 @@ export function VolatilityAnalysis() {
   const { data: bookData, isLoading: bookLoading, isError: bookError, refetch: refetchBook } = useBookSummary('BTC', 'option');
   const { data: histVolData, isLoading: hvLoading, isError: hvError, refetch: refetchHv } = useHistoricalVolatility('BTC');
 
+  const groupedByTenor = React.useMemo(() =>
+    bookData && bookData.length > 0 ? groupByTenor(bookData) : new Map(),
+    [bookData],
+  );
+
   const skew25Delta = React.useMemo(() => {
-    if (!bookData || bookData.length === 0) return [];
-    const grouped = groupByTenor(bookData);
+    if (groupedByTenor.size === 0) return [];
     const tenors = ['1M', '3M', '6M'] as const;
     return tenors.map((tenor) => {
-      const items = grouped.get(tenor);
+      const items = groupedByTenor.get(tenor);
       const skew = items ? calculate25DeltaSkew(items) : null;
       return {
         tenor,
@@ -22,14 +26,13 @@ export function VolatilityAnalysis() {
         hasData: skew !== null,
       };
     }).filter((d) => d.hasData);
-  }, [bookData]);
+  }, [groupedByTenor]);
 
   const termStructure = React.useMemo(() => {
-    if (!bookData || bookData.length === 0) return [];
-    const grouped = groupByTenor(bookData);
+    if (groupedByTenor.size === 0) return [];
     const tenors = ['1M', '3M', '6M'] as const;
     return tenors.map((tenor) => {
-      const items = grouped.get(tenor);
+      const items = groupedByTenor.get(tenor);
       const iv = items ? calculateATMIV(items) : null;
       return {
         tenor,
@@ -37,7 +40,7 @@ export function VolatilityAnalysis() {
         hasData: iv !== null,
       };
     }).filter((d) => d.hasData);
-  }, [bookData]);
+  }, [groupedByTenor]);
 
   const hvIvData = React.useMemo(() => {
     if (!histVolData) return [];
