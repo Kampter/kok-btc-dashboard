@@ -21,3 +21,6 @@ packages/shared-types/src/**/*.js.map
 
 # Playwright 测试输出
 apps/web/test-results/
+
+# TanStack Start 自动生成的路由树
+apps/web/app/routeTree.gen.ts
