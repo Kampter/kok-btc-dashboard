@@ -4,7 +4,7 @@ import {
   OkxCandleSchema,
   RsScoreSchema,
   RsChartDataSchema,
-} from './rs-monitor';
+} from './rs-monitor.js';
 
 describe('TokenUniverseItemSchema', () => {
   it('validates a complete item', () => {

@@ -4,6 +4,7 @@ import type { OptionSummary, MarketOverview } from '../schemas/option.js';
 import type { OptionTrade } from '../schemas/trade.js';
 import type { OIDistributionList } from '../schemas/oi-distribution.js';
 import type { GreeksExposure } from '../schemas/greeks.js';
+import type { RsScore, RsChartData } from '../schemas/rs-monitor.js';
 
 const t = initTRPC.create();
 
@@ -59,6 +60,18 @@ export const appRouter = t.router({
     exposure: t.procedure
       .input(z.object({ currency: z.string().default('BTC') }))
       .query(async () => ({} as GreeksExposure)),
+  }),
+
+  rsMonitor: t.router({
+    latest: t.procedure.query(async () => [] as RsScore[]),
+
+    history: t.procedure
+      .input(z.object({ tokenSymbol: z.string(), days: z.number().default(7) }))
+      .query(async () => [] as RsScore[]),
+
+    chart: t.procedure
+      .input(z.object({ tokenSymbol: z.string() }))
+      .query(async () => ({} as RsChartData)),
   }),
 });
 
