@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { AxiosError } from 'axios';
 import { parseInstrumentName } from '@kok/shared-types';
 import type { GreeksExposure, GreeksProgress, GreekValues } from '@kok/shared-types';
 import { DeribitService } from '../deribit/deribit.service';
@@ -58,7 +59,7 @@ export class GreeksService {
 
         const is429 =
           lastError.message.includes('429') ||
-          (error as Record<string, unknown>)?.response?.status === 429;
+          (error as AxiosError)?.response?.status === 429;
 
         if (is429 && attempt < maxRetries) {
           const delayMs = 2000 * Math.pow(2, attempt);
