@@ -10,6 +10,7 @@ export const SentimentOverviewCard = memo(function SentimentOverviewCard({
   onClick: () => void
 }) {
   const { data: trades, isLoading, isError } = useTrades('BTC', 500)
+  // 资金情绪阈值：P/C 交易量比 >55% 视为偏看跌（Put 交易更活跃），<45% 偏看涨
   const pcRatio = useMemo(() => {
     if (!trades || trades.length === 0) return null
     let putVol = 0, callVol = 0

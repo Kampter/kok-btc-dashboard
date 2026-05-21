@@ -53,7 +53,7 @@ export const OverviewCard = memo(function OverviewCard({
         )}
       >
         <div className="text-sm font-medium text-muted-foreground">{title}</div>
-        <div className="mt-2 text-sm text-put">数据加载失败，点击重试</div>
+        <div className="mt-2 text-sm text-put">数据加载失败，点击查看详情</div>
       </button>
     )
   }

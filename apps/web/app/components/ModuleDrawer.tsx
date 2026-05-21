@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react'
+import { memo, useEffect, useState, useCallback } from 'react'
 import { cn } from '../lib/utils'
 
 export interface ModuleDrawerProps {
@@ -15,23 +15,48 @@ export const ModuleDrawer = memo(function ModuleDrawer({
   children,
 }: ModuleDrawerProps) {
   const isOpen = moduleId !== null
+  const [isClosing, setIsClosing] = useState(false)
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true)
+    // Delay actual close to allow animation to play
+    setTimeout(() => {
+      setIsClosing(false)
+      onClose()
+    }, 200)
+  }, [onClose])
 
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+    // Prevent background scrolling when drawer is open
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isOpen, handleClose])
 
-  if (!isOpen) return null
+  if (!isOpen && !isClosing) return null
+
+  const animationName = isClosing ? 'slideOutRight' : 'slideInRight'
+  const animationDuration = isClosing ? '200ms' : '300ms'
 
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/40 z-40"
-        onClick={onClose}
+        className={cn(
+          'fixed inset-0 z-40',
+          isClosing ? 'opacity-0' : 'bg-black/40',
+        )}
+        style={{
+          transition: 'opacity 200ms ease',
+        }}
+        onClick={handleClose}
         aria-hidden="true"
       />
       <div
@@ -41,7 +66,7 @@ export const ModuleDrawer = memo(function ModuleDrawer({
           'flex flex-col',
         )}
         style={{
-          animation: 'slideInRight 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+          animation: `${animationName} ${animationDuration} cubic-bezier(0.16, 1, 0.3, 1)`,
         }}
         role="dialog"
         aria-modal="true"
@@ -49,7 +74,7 @@ export const ModuleDrawer = memo(function ModuleDrawer({
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <h2 className="text-lg font-semibold">{title || '详情'}</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="关闭"
           >

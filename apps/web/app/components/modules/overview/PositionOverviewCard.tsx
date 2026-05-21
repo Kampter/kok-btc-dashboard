@@ -10,6 +10,7 @@ export const PositionOverviewCard = memo(function PositionOverviewCard({
   onClick: () => void
 }) {
   const { data: bookData, isLoading, isError } = useBookSummary('BTC', 'option')
+  // 持仓结构情绪阈值：Call 占比 >60% 视为偏看涨，<40% 偏看跌
   const pcRatio = useMemo(() => {
     if (!bookData) return null
     let callOI = 0, putOI = 0

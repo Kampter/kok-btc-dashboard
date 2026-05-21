@@ -19,7 +19,7 @@
 
 @layer base {
   body {
-    font-family: 'Geist Sans', 'Geist Mono', system-ui, sans-serif;
+    font-family: 'Geist Variable', system-ui, sans-serif;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 }
@@ -27,6 +27,11 @@
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
 }
 
 @keyframes fadeInUp {
