@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SnapshotService } from './snapshot.service';
+import type { DeribitService } from '../deribit/deribit.service';
 
 const mockClient = {
   query: vi.fn(),
@@ -11,16 +12,17 @@ const mockPool = {
   connect: vi.fn().mockResolvedValue(mockClient),
 } as unknown as import('pg').Pool;
 
-const mockCacheManager = {
-  get: vi.fn(),
-} as unknown as import('cache-manager').Cache;
+const mockDeribitService = {
+  getBookSummaryByCurrency: vi.fn(),
+  getIndexPrice: vi.fn(),
+} as unknown as DeribitService;
 
 describe('SnapshotService', () => {
   let service: SnapshotService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new SnapshotService(mockPool, mockCacheManager);
+    service = new SnapshotService(mockPool, mockDeribitService);
   });
 
   describe('onModuleInit', () => {
@@ -42,21 +44,20 @@ describe('SnapshotService', () => {
   });
 
   describe('collectSnapshot', () => {
-    it('should skip when book_summary cache is empty', async () => {
-      mockCacheManager.get = vi.fn().mockResolvedValue(null);
+    it('should propagate error when deribit book summary fails', async () => {
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockRejectedValue(new Error('API error'));
 
-      await service.collectSnapshot();
-
+      await expect(service.collectSnapshot()).rejects.toThrow('API error');
       expect(mockPool.connect).not.toHaveBeenCalled();
     });
 
-    it('should skip when index_price cache is empty', async () => {
-      mockCacheManager.get = vi.fn()
-        .mockResolvedValueOnce([{ instrument_name: 'BTC-30MAY26-100000-C', open_interest: 100 }])
-        .mockResolvedValueOnce(null);
+    it('should propagate error when deribit index price fails', async () => {
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockResolvedValue([
+        { instrument_name: 'BTC-30MAY26-100000-C', open_interest: 100 },
+      ]);
+      vi.mocked(mockDeribitService.getIndexPrice).mockRejectedValue(new Error('API error'));
 
-      await service.collectSnapshot();
-
+      await expect(service.collectSnapshot()).rejects.toThrow('API error');
       expect(mockPool.connect).not.toHaveBeenCalled();
     });
 
@@ -95,9 +96,8 @@ describe('SnapshotService', () => {
       ];
       const indexData = { index_price: 100000 };
 
-      mockCacheManager.get = vi.fn()
-        .mockResolvedValueOnce(bookData)
-        .mockResolvedValueOnce(indexData);
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockResolvedValue(bookData);
+      vi.mocked(mockDeribitService.getIndexPrice).mockResolvedValue(indexData);
 
       // Sequence: BEGIN, market INSERT, contract INSERT, COMMIT
       mockClient.query = vi.fn()
@@ -163,9 +163,8 @@ describe('SnapshotService', () => {
       ];
       const indexData = { index_price: 100000 };
 
-      mockCacheManager.get = vi.fn()
-        .mockResolvedValueOnce(bookData)
-        .mockResolvedValueOnce(indexData);
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockResolvedValue(bookData);
+      vi.mocked(mockDeribitService.getIndexPrice).mockResolvedValue(indexData);
 
       // ON CONFLICT DO NOTHING returns no rows
       mockClient.query = vi.fn()
@@ -196,9 +195,8 @@ describe('SnapshotService', () => {
       ];
       const indexData = { index_price: 100000 };
 
-      mockCacheManager.get = vi.fn()
-        .mockResolvedValueOnce(bookData)
-        .mockResolvedValueOnce(indexData);
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockResolvedValue(bookData);
+      vi.mocked(mockDeribitService.getIndexPrice).mockResolvedValue(indexData);
 
       mockClient.query = vi.fn()
         .mockResolvedValueOnce({}) // BEGIN
@@ -236,9 +234,8 @@ describe('SnapshotService', () => {
       ];
       const indexData = { index_price: 100000 };
 
-      mockCacheManager.get = vi.fn()
-        .mockResolvedValueOnce(bookData)
-        .mockResolvedValueOnce(indexData);
+      vi.mocked(mockDeribitService.getBookSummaryByCurrency).mockResolvedValue(bookData);
+      vi.mocked(mockDeribitService.getIndexPrice).mockResolvedValue(indexData);
 
       mockClient.query = vi.fn()
         .mockResolvedValueOnce({}) // BEGIN
