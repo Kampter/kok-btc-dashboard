@@ -50,6 +50,7 @@ export const OverviewCard = memo(function OverviewCard({
         className={cn(
           'w-full rounded-xl border border-put/30 bg-card p-4 text-left transition-all duration-200',
           'hover:border-put/50 hover:shadow-md',
+          'min-h-[120px]',
         )}
       >
         <div className="text-sm font-medium text-muted-foreground">{title}</div>
@@ -64,6 +65,7 @@ export const OverviewCard = memo(function OverviewCard({
       className={cn(
         'w-full rounded-xl border bg-card p-4 text-left transition-all duration-200',
         'hover:border-muted-foreground/30 hover:shadow-md',
+        'min-h-[120px]',
         'active:scale-[0.98]',
         isActive && 'border-primary ring-1 ring-primary/20 shadow-md',
         !isActive && 'border-border',
