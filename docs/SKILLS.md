@@ -92,22 +92,10 @@ git commit -m "docs: add [feature] plan/spec"
 
 ### Worktree 切换前检查
 
-切换 worktree 前，运行以下脚本检查是否有未提交的 docs：
+切换 worktree 前，确认 `docs/superpowers/` 下的更改已提交：
 
 ```bash
-source scripts/pre-worktree-switch.sh
+git status docs/superpowers/
 ```
 
-若检测到未提交的 `docs/superpowers/` 更改，脚本会阻止切换并提供处理选项（commit / stash / bypass）。
-
-### Dangling Commit 恢复
-
-若怀疑文档已丢失在 dangling commit 中：
-
-```bash
-# 扫描丢失的文档
-./scripts/check-dangling-docs.sh
-
-# 自动恢复到 docs/superpowers/recovered/
-./scripts/check-dangling-docs.sh --recover
-```
+若存在未提交的更改，先 commit 或 stash，避免文档在切换时丢失。
