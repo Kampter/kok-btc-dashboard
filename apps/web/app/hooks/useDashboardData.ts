@@ -33,3 +33,9 @@ export function useOIDistribution(
     enabled,
   });
 }
+
+export function useGreeksExposure(currency: string = 'BTC') {
+  return useQuery(
+    trpc.greeks.exposure.queryOptions({ currency }),
+  );
+}

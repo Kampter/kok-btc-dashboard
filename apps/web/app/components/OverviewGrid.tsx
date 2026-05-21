@@ -5,6 +5,7 @@ import { PositionOverviewCard } from './modules/overview/PositionOverviewCard'
 import { SentimentOverviewCard } from './modules/overview/SentimentOverviewCard'
 import { ExpiryOverviewCard } from './modules/overview/ExpiryOverviewCard'
 import { OIDistributionOverviewCard } from './modules/overview/OIDistributionOverviewCard'
+import { GreeksOverviewCard } from './modules/overview/GreeksOverviewCard'
 
 const MODULES = [
   { id: 'overview', label: '市场概况', Component: MarketOverviewCard },
@@ -13,6 +14,7 @@ const MODULES = [
   { id: 'sentiment', label: '资金情绪', Component: SentimentOverviewCard },
   { id: 'expiry', label: '到期分析', Component: ExpiryOverviewCard },
   { id: 'oi', label: 'OI 分布', Component: OIDistributionOverviewCard },
+  { id: 'greeks', label: 'Greeks 风险暴露', Component: GreeksOverviewCard },
 ] as const
 
 export type ModuleId = (typeof MODULES)[number]['id']
