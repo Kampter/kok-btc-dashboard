@@ -32,6 +32,7 @@ export class SnapshotService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.ensureTables();
+    await this.migrateSchema();
   }
 
   private async ensureTables(): Promise<void> {
@@ -43,7 +44,7 @@ export class SnapshotService implements OnModuleInit {
         total_oi_usd  NUMERIC(20,2),
         total_volume_24h_usd NUMERIC(20,2),
         atm_iv        NUMERIC(8,4),
-        pc_ratio      NUMERIC(6,4),
+        put_ratio     NUMERIC(6,4),
         created_at    TIMESTAMPTZ DEFAULT NOW()
       )
     `);
@@ -80,6 +81,19 @@ export class SnapshotService implements OnModuleInit {
     `);
   }
 
+  private async migrateSchema(): Promise<void> {
+    // Rename pc_ratio to put_ratio if old column exists (from earlier version)
+    const columnCheck = await this.pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'market_snapshots' AND column_name = 'pc_ratio'
+    `);
+    if (columnCheck.rows.length > 0) {
+      await this.pool.query(`ALTER TABLE market_snapshots RENAME COLUMN pc_ratio TO put_ratio`);
+      this.logger.log('Migrated pc_ratio column to put_ratio');
+    }
+  }
+
   async collectSnapshot(): Promise<void> {
     const bookData = await this.cacheManager.get<BookSummaryItem[]>('book_summary_BTC_option');
     const indexData = await this.cacheManager.get<IndexPriceData>('index_price_btc_usd');
@@ -96,7 +110,7 @@ export class SnapshotService implements OnModuleInit {
     let totalVolume24hUsd = 0;
     let callOiUsd = 0;
     let putOiUsd = 0;
-    const atmIVs: number[] = [];
+    const atmIVEntries: { iv: number; oiUsd: number }[] = [];
 
     for (const item of bookData) {
       const oi = (item.open_interest as number) ?? 0;
@@ -117,86 +131,102 @@ export class SnapshotService implements OnModuleInit {
 
         const iv = (item.mark_iv as number) ?? 0;
         if (parsed.strike >= btcPrice * 0.98 && parsed.strike <= btcPrice * 1.02 && iv > 0) {
-          atmIVs.push(iv);
+          atmIVEntries.push({ iv, oiUsd });
         }
       } catch {
         // Skip instruments that fail parsing
       }
     }
 
-    const atmIV = atmIVs.length > 0
-      ? atmIVs.reduce((sum, iv) => sum + iv, 0) / atmIVs.length
+    const totalAtmOiUsd = atmIVEntries.reduce((sum, e) => sum + e.oiUsd, 0);
+    const atmIV = totalAtmOiUsd > 0
+      ? atmIVEntries.reduce((sum, e) => sum + e.iv * e.oiUsd, 0) / totalAtmOiUsd
       : 0;
 
-    const pcRatio = (putOiUsd + callOiUsd) > 0
+    const putRatio = (putOiUsd + callOiUsd) > 0
       ? putOiUsd / (putOiUsd + callOiUsd)
       : 0;
 
-    // Insert market snapshot
+    // Insert market snapshot + contract snapshots in a single transaction
     const snapshotAt = new Date();
     snapshotAt.setSeconds(0, 0); // Truncate to minute
 
-    const marketResult = await this.pool.query(
-      `INSERT INTO market_snapshots (snapshot_at, btc_price, total_oi_usd, total_volume_24h_usd, atm_iv, pc_ratio)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (snapshot_at) DO NOTHING
-       RETURNING id`,
-      [snapshotAt, btcPrice, totalOiUsd, totalVolume24hUsd, atmIV, pcRatio],
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    if (marketResult.rows.length === 0) {
-      this.logger.warn(`Snapshot already exists for ${snapshotAt.toISOString()}, skipping`);
-      return;
-    }
-
-    const snapshotId = marketResult.rows[0].id;
-
-    // Batch insert contract snapshots
-    const contractValues: unknown[] = [];
-    for (const item of bookData) {
-      try {
-        const parsed = parseInstrumentName(item.instrument_name);
-        const oi = (item.open_interest as number) ?? 0;
-        const underlyingPrice = (item.underlying_price as number) ?? btcPrice;
-        const oiUsd = oi * underlyingPrice * CONTRACT_MULTIPLIER;
-
-        contractValues.push([
-          snapshotId,
-          item.instrument_name,
-          parsed.strike,
-          parsed.expiry,
-          parsed.optionType,
-          oi,
-          oiUsd,
-          (item.mark_iv as number) ?? 0,
-          (item.bid_iv as number) ?? 0,
-          (item.ask_iv as number) ?? 0,
-          underlyingPrice,
-          (item.volume_usd as number) ?? 0,
-        ]);
-      } catch {
-        // Skip instruments that fail parsing
-      }
-    }
-
-    if (contractValues.length > 0) {
-      const placeholders = contractValues
-        .map((_, i) => `($${i * 12 + 1}, $${i * 12 + 2}, $${i * 12 + 3}, $${i * 12 + 4}, $${i * 12 + 5}, $${i * 12 + 6}, $${i * 12 + 7}, $${i * 12 + 8}, $${i * 12 + 9}, $${i * 12 + 10}, $${i * 12 + 11}, $${i * 12 + 12})`)
-        .join(', ');
-
-      const flatValues = contractValues.flat();
-
-      await this.pool.query(
-        `INSERT INTO contract_snapshots (
-          snapshot_id, instrument_name, strike, expiry, option_type,
-          open_interest, open_interest_usd, mark_iv, bid_iv, ask_iv,
-          underlying_price, volume_24h
-        ) VALUES ${placeholders}`,
-        flatValues,
+      const marketResult = await client.query(
+        `INSERT INTO market_snapshots (snapshot_at, btc_price, total_oi_usd, total_volume_24h_usd, atm_iv, put_ratio)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (snapshot_at) DO NOTHING
+         RETURNING id`,
+        [snapshotAt, btcPrice, totalOiUsd, totalVolume24hUsd, atmIV, putRatio],
       );
-    }
 
-    this.logger.log(`Snapshot collected: id=${snapshotId}, contracts=${contractValues.length}, time=${snapshotAt.toISOString()}`);
+      if (marketResult.rows.length === 0) {
+        await client.query('COMMIT');
+        this.logger.warn(`Snapshot already exists for ${snapshotAt.toISOString()}, skipping`);
+        return;
+      }
+
+      const snapshotId = marketResult.rows[0].id;
+
+      // Batch insert contract snapshots
+      const contractValues: unknown[] = [];
+      for (const item of bookData) {
+        try {
+          const parsed = parseInstrumentName(item.instrument_name);
+          const oi = (item.open_interest as number) ?? 0;
+          const underlyingPrice = (item.underlying_price as number) ?? btcPrice;
+          const oiUsd = oi * underlyingPrice * CONTRACT_MULTIPLIER;
+
+          contractValues.push([
+            snapshotId,
+            item.instrument_name,
+            parsed.strike,
+            parsed.expiry,
+            parsed.optionType,
+            oi,
+            oiUsd,
+            (item.mark_iv as number) ?? 0,
+            (item.bid_iv as number) ?? 0,
+            (item.ask_iv as number) ?? 0,
+            underlyingPrice,
+            (item.volume_usd as number) ?? 0,
+          ]);
+        } catch {
+          // Skip instruments that fail parsing
+        }
+      }
+
+      if (contractValues.length > 0) {
+        const placeholders = contractValues
+          .map((_, i) => `($${i * 12 + 1}, $${i * 12 + 2}, $${i * 12 + 3}, $${i * 12 + 4}, $${i * 12 + 5}, $${i * 12 + 6}, $${i * 12 + 7}, $${i * 12 + 8}, $${i * 12 + 9}, $${i * 12 + 10}, $${i * 12 + 11}, $${i * 12 + 12})`)
+          .join(', ');
+
+        const flatValues = contractValues.flat();
+
+        await client.query(
+          `INSERT INTO contract_snapshots (
+            snapshot_id, instrument_name, strike, expiry, option_type,
+            open_interest, open_interest_usd, mark_iv, bid_iv, ask_iv,
+            underlying_price, volume_24h
+          ) VALUES ${placeholders}`,
+          flatValues,
+        );
+      }
+
+      await client.query('COMMIT');
+      this.logger.log(`Snapshot collected: id=${snapshotId}, contracts=${contractValues.length}, time=${snapshotAt.toISOString()}`);
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      this.logger.error(
+        `Snapshot collection failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async cleanupOldSnapshots(): Promise<void> {

@@ -505,7 +505,7 @@ export class SnapshotService implements OnModuleInit {
         `INSERT INTO contract_snapshots (
           snapshot_id, instrument_name, strike, expiry, option_type,
           open_interest, open_interest_usd, mark_iv, bid_iv, ask_iv,
-          underlying_price, volume_24h, created_at
+          underlying_price, volume_24h
         ) VALUES ${placeholders}`,
         flatValues,
       );
