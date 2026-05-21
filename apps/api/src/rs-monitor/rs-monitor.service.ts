@@ -170,9 +170,9 @@ export class RsMonitorService implements OnModuleInit {
     const result = await this.pool.query<ScoreRow>(`
       SELECT token_symbol, rs_score, btc_return_7d, raw_return_7d, z_score, signal, rank_position, scored_at
       FROM rs_scores
-      WHERE token_symbol = $1 AND scored_at >= NOW() - INTERVAL '${days} days'
+      WHERE token_symbol = $1 AND scored_at >= NOW() - INTERVAL '1 day' * $2
       ORDER BY scored_at ASC
-    `, [tokenSymbol]);
+    `, [tokenSymbol, days]);
     return result.rows.map((row) => ({
       tokenSymbol: row.token_symbol,
       rsScore: Number(row.rs_score),

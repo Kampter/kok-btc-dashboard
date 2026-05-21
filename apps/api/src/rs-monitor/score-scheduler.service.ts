@@ -4,6 +4,58 @@ import { UniverseService } from '../universe/universe.service';
 import { RsMonitorService } from './rs-monitor.service';
 import type { RsScore } from '@kok/shared-types';
 
+interface TokenReturnInput {
+  symbol: string;
+  btcReturn: number;
+  rawReturn: number;
+}
+
+export function calculateRSScores(
+  tokenReturns: TokenReturnInput[],
+  scoredAt: string,
+): RsScore[] {
+  const returns = tokenReturns.map((t) => t.btcReturn);
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+  const std = Math.sqrt(variance);
+
+  const scoredTokens: RsScore[] = tokenReturns.map((t) => {
+    const zScore = std === 0 ? 0 : (t.btcReturn - mean) / std;
+    const clampedZ = Math.max(-3, Math.min(3, zScore));
+    const rsScore = 50 + 10 * clampedZ;
+
+    return {
+      tokenSymbol: t.symbol,
+      rsScore: Math.round(rsScore * 100) / 100,
+      btcReturn7d: Math.round(t.btcReturn * 10000) / 10000,
+      rawReturn7d: Math.round(t.rawReturn * 10000) / 10000,
+      zScore: Math.round(zScore * 10000) / 10000,
+      signal: 'neutral' as const,
+      rankPosition: 0,
+      scoredAt,
+    };
+  });
+
+  scoredTokens.sort((a, b) => b.rsScore - a.rsScore);
+
+  const total = scoredTokens.length;
+  const strongThreshold = Math.floor(total * 0.8);
+  const weakThreshold = Math.floor(total * 0.2);
+
+  scoredTokens.forEach((t, index) => {
+    t.rankPosition = index + 1;
+    if (index >= strongThreshold) {
+      t.signal = 'strong';
+    } else if (index < weakThreshold) {
+      t.signal = 'weak';
+    } else {
+      t.signal = 'neutral';
+    }
+  });
+
+  return scoredTokens;
+}
+
 @Injectable()
 export class ScoreSchedulerService {
   private readonly logger = new Logger(ScoreSchedulerService.name);
@@ -65,44 +117,10 @@ export class ScoreSchedulerService {
       return;
     }
 
-    const returns = tokenReturns.map((t) => t.btcReturn);
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
-    const std = Math.sqrt(variance);
-
-    const scoredTokens: RsScore[] = tokenReturns.map((t) => {
-      const zScore = std === 0 ? 0 : (t.btcReturn - mean) / std;
-      const clampedZ = Math.max(-3, Math.min(3, zScore));
-      const rsScore = 50 + 10 * clampedZ;
-
-      return {
-        tokenSymbol: t.symbol,
-        rsScore: Math.round(rsScore * 100) / 100,
-        btcReturn7d: Math.round(t.btcReturn * 10000) / 10000,
-        rawReturn7d: Math.round(t.rawReturn * 10000) / 10000,
-        zScore: Math.round(zScore * 10000) / 10000,
-        signal: 'neutral' as const,
-        rankPosition: 0,
-        scoredAt: new Date().toISOString(),
-      };
-    });
-
-    scoredTokens.sort((a, b) => b.rsScore - a.rsScore);
-
-    const total = scoredTokens.length;
-    const strongThreshold = Math.floor(total * 0.8);
-    const weakThreshold = Math.floor(total * 0.2);
-
-    scoredTokens.forEach((t, index) => {
-      t.rankPosition = index + 1;
-      if (index >= strongThreshold) {
-        t.signal = 'strong';
-      } else if (index < weakThreshold) {
-        t.signal = 'weak';
-      } else {
-        t.signal = 'neutral';
-      }
-    });
+    const scoredTokens = calculateRSScores(
+      tokenReturns,
+      new Date().toISOString(),
+    );
 
     await this.rsMonitorService.saveScores(scoredTokens, new Date());
     this.logger.log(`RS scores calculated for ${scoredTokens.length} tokens`);

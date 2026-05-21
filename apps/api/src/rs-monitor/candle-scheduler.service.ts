@@ -24,7 +24,8 @@ export class CandleSchedulerService {
       return;
     }
 
-    const targets = [...universe, { token_symbol: 'BTC', inst_id: 'BTC-USDT', rank: 0 }];
+    const hasBtc = universe.some((u) => u.token_symbol === 'BTC');
+    const targets = hasBtc ? universe : [...universe, { token_symbol: 'BTC', inst_id: 'BTC-USDT', rank: 0 }];
 
     for (const token of targets) {
       try {

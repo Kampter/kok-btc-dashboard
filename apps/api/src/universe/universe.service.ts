@@ -42,10 +42,6 @@ export class UniverseService implements OnModuleInit {
     return result.rows;
   }
 
-  async getBtcInstId(): Promise<string> {
-    return 'BTC-USDT';
-  }
-
   async updateUniverse(items: Array<{ tokenSymbol: string; instId: string; rank: number; marketCapUsd?: number }>): Promise<void> {
     const client = await this.pool.connect();
     try {
