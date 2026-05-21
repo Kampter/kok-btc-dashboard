@@ -34,9 +34,12 @@ test.describe('Dashboard', () => {
     await openModule(page, '市场概况')
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
 
-    // Switch to volatility
-    await page.getByRole('button', { name: '波动率分析' }).click()
-    await expect(page.getByText('IV 期限结构').first()).toBeVisible({ timeout: 10000 })
+    // Close and switch to volatility
+    await closeModule(page)
+    await openModule(page, '波动率分析')
+    // Wait for loading skeleton to disappear
+    await page.waitForSelector('.animate-pulse', { state: 'hidden', timeout: 10000 })
+    await expect(page.getByText('ATM IV 期限结构')).toBeVisible({ timeout: 10000 })
   })
 
   test('header shows Deribit connection status', async ({ page }) => {
@@ -51,6 +54,8 @@ test.describe('Dashboard', () => {
     for (let i = 0; i < 10; i++) {
       const mod = modules[i % modules.length]
       await page.getByRole('button', { name: mod }).click()
+      // Wait for drawer animation (300ms open + 200ms close)
+      await page.waitForTimeout(350)
     }
     // Page should still be functional
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
