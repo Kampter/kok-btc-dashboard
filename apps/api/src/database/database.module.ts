@@ -20,6 +20,6 @@ import { PersistentCacheService, DB_POOL } from './persistent-cache.service'
     },
     PersistentCacheService,
   ],
-  exports: [PersistentCacheService],
+  exports: [PersistentCacheService, DB_POOL],
 })
 export class DatabaseModule {}
