@@ -43,5 +43,28 @@
       "Read(//**/.aws/**)",
       "Read(//**/.kube/**)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE '^rm\\s+-rf\\s+(/$|/\\s|~$|~\\s)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"rm -rf on root or home directory is blocked\"}}'; exit 2; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude Code 任务已完成，等待输入\" with title \"Claude Code\"' 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
   }
 }
