@@ -1,9 +1,8 @@
 import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
 import type { Pool } from 'pg';
 import { parseInstrumentName } from '@kok/shared-types';
 import { DB_POOL } from '../database/persistent-cache.service';
+import { DeribitService } from '../deribit/deribit.service';
 
 const CONTRACT_MULTIPLIER = 1;
 
@@ -17,17 +16,13 @@ interface BookSummaryItem {
   ask_iv: number;
 }
 
-interface IndexPriceData {
-  index_price: number;
-}
-
 @Injectable()
 export class SnapshotService implements OnModuleInit {
   private readonly logger = new Logger(SnapshotService.name);
 
   constructor(
     @Inject(DB_POOL) private readonly pool: Pool,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly deribitService: DeribitService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -95,13 +90,8 @@ export class SnapshotService implements OnModuleInit {
   }
 
   async collectSnapshot(): Promise<void> {
-    const bookData = await this.cacheManager.get<BookSummaryItem[]>('book_summary_BTC_option');
-    const indexData = await this.cacheManager.get<IndexPriceData>('index_price_btc_usd');
-
-    if (!bookData || !indexData) {
-      this.logger.warn('Memory cache empty, skipping snapshot collection');
-      return;
-    }
+    const bookData = (await this.deribitService.getBookSummaryByCurrency('BTC', 'option')) as unknown as BookSummaryItem[];
+    const indexData = await this.deribitService.getIndexPrice('btc_usd');
 
     const btcPrice = indexData.index_price ?? 0;
 
