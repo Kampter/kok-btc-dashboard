@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { useBookSummary } from '../../../hooks/useDashboardData'
 import { OverviewCard } from '../../OverviewCard'
 import { formatPercent } from '../../../lib/utils'
@@ -13,12 +13,12 @@ export const VolatilityOverviewCard = memo(function VolatilityOverviewCard({
 }) {
   const { data: bookData, isLoading, isError } = useBookSummary('BTC', 'option')
 
-  const skew1M = (() => {
+  const skew1M = useMemo(() => {
     if (!bookData || bookData.length === 0) return null
     const grouped = groupByTenor(bookData)
     const items1M = grouped.get('1M')
     return items1M ? calculate25DeltaSkew(items1M) : null
-  })()
+  }, [bookData])
 
   const status = isLoading ? 'loading' : isError ? 'error' : 'ready'
 

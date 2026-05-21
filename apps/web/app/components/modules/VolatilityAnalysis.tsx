@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useBookSummary, useHistoricalVolatility } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorFallback } from '../ui/error-fallback';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, Cell } from 'recharts';
 import { groupByTenor, calculate25DeltaSkew, calculateATMIV } from '../../lib/volatility';
 
 export function VolatilityAnalysis() {
@@ -84,7 +84,11 @@ export function VolatilityAnalysis() {
                 labelFormatter={(l: unknown) => `期限: ${l}`}
               />
               <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
-              <Bar dataKey="skew" name="25Δ Skew" fill="#4ade80" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="skew" name="25Δ Skew" radius={[4, 4, 0, 0]}>
+                {skew25Delta.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.skew >= 0 ? '#f87171' : '#4ade80'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
           <p className="text-xs text-muted-foreground mt-2">
