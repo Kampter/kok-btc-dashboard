@@ -44,6 +44,38 @@ export class GreeksService {
     };
   }
 
+  private async getTickerWithRetry(
+    instrumentName: string,
+    maxRetries = 3,
+  ): Promise<ReturnType<DeribitService['getTicker']>> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.deribitService.getTicker(instrumentName);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        const is429 =
+          lastError.message.includes('429') ||
+          (error as Record<string, unknown>)?.response?.status === 429;
+
+        if (is429 && attempt < maxRetries) {
+          const delayMs = 2000 * Math.pow(2, attempt);
+          this.logger.warn(
+            `Rate limited (429) for ${instrumentName}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`,
+          );
+          await sleep(delayMs);
+          continue;
+        }
+
+        throw lastError;
+      }
+    }
+
+    throw lastError ?? new Error(`Failed to get ticker for ${instrumentName}`);
+  }
+
   async computeExposure(currency: string): Promise<void> {
     try {
       const instruments = await this.deribitService.getInstruments(currency, 'option');
@@ -74,7 +106,6 @@ export class GreeksService {
       const BATCH_SIZE = 5;
       const results: TickerResult[] = [];
 
-      // Initialize cache with empty progress
       const initialResult = this.buildExposure(currency, [], spot, {
         total: sorted.length,
         completed: 0,
@@ -87,7 +118,7 @@ export class GreeksService {
 
         for (const instrument of batch) {
           try {
-            const ticker = await this.deribitService.getTicker(instrument.instrument_name);
+            const ticker = await this.getTickerWithRetry(instrument.instrument_name);
             results.push({
               strike: instrument.strike,
               greeks: ticker.greeks,
@@ -96,12 +127,11 @@ export class GreeksService {
             });
           } catch (error) {
             this.logger.warn(
-              `Failed to get ticker for ${instrument.instrument_name}: ${error instanceof Error ? error.message : String(error)}`,
+              `Failed to get ticker for ${instrument.instrument_name} after retries: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
 
-        // Update cache after each batch
         const isLastBatch = i + BATCH_SIZE >= sorted.length;
         const progress: GreeksProgress = {
           total: sorted.length,
@@ -182,7 +212,6 @@ export class GreeksService {
     const totalGex = byStrike.reduce((sum, s) => sum + s.net_gex, 0);
     const totalDex = byStrike.reduce((sum, s) => sum + s.net_delta, 0);
 
-    // Find Call Wall (max call_gex)
     let callWall: number | null = null;
     let maxCallGex = -Infinity;
     for (const s of byStrike) {
@@ -192,7 +221,6 @@ export class GreeksService {
       }
     }
 
-    // Find Put Wall (max put_gex by absolute value)
     let putWall: number | null = null;
     let maxPutGex = -Infinity;
     for (const s of byStrike) {
@@ -203,11 +231,14 @@ export class GreeksService {
       }
     }
 
-    // Find zero gamma strike via linear interpolation
     let zeroGammaStrike: number | null = null;
     for (let i = 0; i < byStrike.length - 1; i++) {
       const curr = byStrike[i]!;
       const next = byStrike[i + 1]!;
+      if (curr.net_gex === 0) {
+        zeroGammaStrike = curr.strike;
+        break;
+      }
       if ((curr.net_gex > 0 && next.net_gex <= 0) || (curr.net_gex < 0 && next.net_gex >= 0)) {
         const t = Math.abs(curr.net_gex) / (Math.abs(curr.net_gex) + Math.abs(next.net_gex));
         zeroGammaStrike = curr.strike + t * (next.strike - curr.strike);

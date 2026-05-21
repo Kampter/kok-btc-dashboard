@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { DeribitService } from '../deribit/deribit.service';
 import { ChatRouter } from '../chat/chat.router';
+import { GreeksService } from '../greeks/greeks.service';
 import {
   MarketOverviewSchema,
   OptionSummarySchema,
@@ -32,10 +33,12 @@ export class TrpcService {
   constructor(
     private readonly deribitService: DeribitService,
     private readonly chatRouter: ChatRouter,
+    private readonly greeksService: GreeksService,
   ) {
     this.appRouter = t.router({
       deribit: this.buildDeribitRouter(),
       chat: this.chatRouter.router,
+      greeks: this.buildGreeksRouter(),
     });
   }
 
@@ -371,6 +374,20 @@ export class TrpcService {
             });
           } catch (error) {
             handleTrpcError('Failed to fetch OI distribution data', error);
+          }
+        }),
+    });
+  }
+
+  private buildGreeksRouter() {
+    return t.router({
+      exposure: t.procedure
+        .input(z.object({ currency: z.string().default('BTC') }))
+        .query(async ({ input }) => {
+          try {
+            return await this.greeksService.getExposure(input.currency);
+          } catch (error) {
+            handleTrpcError('Failed to fetch Greeks exposure data', error);
           }
         }),
     });

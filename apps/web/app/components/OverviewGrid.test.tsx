@@ -32,9 +32,14 @@ vi.mock('./modules/overview/OIDistributionOverviewCard', () => ({
     <button data-testid="oi-card" onClick={onClick}>OI 分布</button>
   ),
 }))
+vi.mock('./modules/overview/GreeksOverviewCard', () => ({
+  GreeksOverviewCard: ({ onClick }: any) => (
+    <button data-testid="greeks-card" onClick={onClick}>Greeks 风险暴露</button>
+  ),
+}))
 
 describe('OverviewGrid', () => {
-  it('renders all 6 module cards', () => {
+  it('renders all 7 module cards', () => {
     render(<OverviewGrid activeModule={null} onModuleClick={vi.fn()} />)
     expect(screen.getByTestId('market-card')).toBeInTheDocument()
     expect(screen.getByTestId('volatility-card')).toBeInTheDocument()
@@ -42,6 +47,7 @@ describe('OverviewGrid', () => {
     expect(screen.getByTestId('sentiment-card')).toBeInTheDocument()
     expect(screen.getByTestId('expiry-card')).toBeInTheDocument()
     expect(screen.getByTestId('oi-card')).toBeInTheDocument()
+    expect(screen.getByTestId('greeks-card')).toBeInTheDocument()
   })
 
   it('marks active module card', () => {

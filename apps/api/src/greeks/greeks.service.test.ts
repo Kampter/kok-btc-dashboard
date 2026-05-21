@@ -80,6 +80,7 @@ describe('GreeksService', () => {
 
       const exposure = (service as any).buildExposure('BTC', results, 80000, { total: 2, completed: 2, is_complete: true });
       expect(exposure.call_wall).toBe(80000);
+      expect(exposure.put_wall).toBe(80000);
     });
   });
 });
