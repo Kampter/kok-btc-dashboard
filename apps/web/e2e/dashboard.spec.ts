@@ -12,9 +12,9 @@ test.describe('Dashboard', () => {
 
   test('default active tab shows market overview content', async ({ page }) => {
     await page.goto('/')
-    await page.waitForTimeout(2000)
-    const html = await page.content()
-    console.log('page html snippet:', html.substring(0, 2000))
+    await page.waitForTimeout(3000)
+    const bodyHtml = await page.evaluate(() => document.body.innerHTML)
+    console.log('body innerHTML:', bodyHtml.substring(0, 3000))
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
   })
