@@ -5,18 +5,7 @@ import { buildSystemPrompt, type DashboardContext } from './prompts/system-promp
 
 @Injectable()
 export class ChatService {
-  private readonly openai: OpenAI;
-
-  constructor() {
-    const apiKey = process.env.MOONSHOT_API_KEY;
-    if (!apiKey) {
-      throw new Error('MOONSHOT_API_KEY environment variable is not set');
-    }
-    this.openai = new OpenAI({
-      apiKey,
-      baseURL: 'https://api.moonshot.cn/v1',
-    });
-  }
+  private openai: OpenAI | null = null;
 
   async *streamChat(
     messages: Array<{ role: string; content: string }>,
@@ -24,6 +13,19 @@ export class ChatService {
   ): AsyncGenerator<
     { type: 'text'; text: string } | { type: 'error'; message: string }
   > {
+    const apiKey = process.env.MOONSHOT_API_KEY;
+    if (!apiKey) {
+      yield { type: 'error', message: 'MOONSHOT_API_KEY environment variable is not set' };
+      return;
+    }
+
+    if (!this.openai) {
+      this.openai = new OpenAI({
+        apiKey,
+        baseURL: 'https://api.moonshot.cn/v1',
+      });
+    }
+
     const systemPrompt = buildSystemPrompt(context);
 
     const chatMessages: ChatCompletionMessageParam[] = [

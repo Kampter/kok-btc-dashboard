@@ -14,14 +14,14 @@ vi.mock('openai', () => {
 });
 
 describe('ChatService', () => {
-  it('should be instantiable', () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
+  it('should be instantiable without env', () => {
+    vi.stubEnv('MOONSHOT_API_KEY', '');
     const service = new ChatService();
     expect(service).toBeInstanceOf(ChatService);
   });
 
   it('should yield error when API key is missing', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('MOONSHOT_API_KEY', '');
 
     const service = new ChatService();
     const generator = service.streamChat(
@@ -36,5 +36,6 @@ describe('ChatService', () => {
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]).toHaveProperty('type', 'error');
+    expect(results[0]).toHaveProperty('message', 'MOONSHOT_API_KEY environment variable is not set');
   });
 });
