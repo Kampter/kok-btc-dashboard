@@ -35,7 +35,8 @@ export function useOIDistribution(
 }
 
 export function useGreeksExposure(currency: string = 'BTC') {
-  return useQuery(
-    trpc.greeks.exposure.queryOptions({ currency }),
-  );
+  return useQuery({
+    ...trpc.greeks.exposure.queryOptions({ currency }),
+    refetchInterval: 30000,
+  });
 }

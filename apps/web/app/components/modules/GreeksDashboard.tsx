@@ -6,6 +6,7 @@ import { formatUSD } from '../../lib/utils';
 import {
   BarChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,12 +17,14 @@ import {
 
 const CALL_COLOR = '#4ade80';
 const PUT_COLOR = '#e94560';
+const NET_COLOR = '#fbbf24';
 
 interface GexChartRow {
   strike: string;
   rawStrike: number;
   call_gex: number;
   put_gex: number;
+  net_gex: number;
 }
 
 interface DexChartRow {
@@ -46,6 +49,7 @@ export function GreeksDashboard() {
         rawStrike: item.strike,
         call_gex: -item.call_gex,
         put_gex: item.put_gex,
+        net_gex: -item.call_gex + item.put_gex,
       }))
       .sort((a, b) => a.rawStrike - b.rawStrike);
   }, [data]);
@@ -219,6 +223,14 @@ export function GreeksDashboard() {
                 <Legend />
                 <Bar dataKey="call_gex" name="Call GEX" fill={CALL_COLOR} radius={[0, 2, 2, 0]} />
                 <Bar dataKey="put_gex" name="Put GEX" fill={PUT_COLOR} radius={[2, 0, 0, 2]} />
+                <Line
+                  type="monotone"
+                  dataKey="net_gex"
+                  name="Net GEX"
+                  stroke={NET_COLOR}
+                  strokeWidth={2}
+                  dot={false}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

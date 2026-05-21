@@ -44,6 +44,38 @@ export class GreeksService {
     };
   }
 
+  private async getTickerWithRetry(
+    instrumentName: string,
+    maxRetries = 3,
+  ): Promise<ReturnType<DeribitService['getTicker']>> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.deribitService.getTicker(instrumentName);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        const is429 =
+          lastError.message.includes('429') ||
+          (error as Record<string, unknown>)?.response?.status === 429;
+
+        if (is429 && attempt < maxRetries) {
+          const delayMs = 2000 * Math.pow(2, attempt);
+          this.logger.warn(
+            `Rate limited (429) for ${instrumentName}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`,
+          );
+          await sleep(delayMs);
+          continue;
+        }
+
+        throw lastError;
+      }
+    }
+
+    throw lastError ?? new Error(`Failed to get ticker for ${instrumentName}`);
+  }
+
   async computeExposure(currency: string): Promise<void> {
     try {
       const instruments = await this.deribitService.getInstruments(currency, 'option');
@@ -86,7 +118,7 @@ export class GreeksService {
 
         for (const instrument of batch) {
           try {
-            const ticker = await this.deribitService.getTicker(instrument.instrument_name);
+            const ticker = await this.getTickerWithRetry(instrument.instrument_name);
             results.push({
               strike: instrument.strike,
               greeks: ticker.greeks,
@@ -95,7 +127,7 @@ export class GreeksService {
             });
           } catch (error) {
             this.logger.warn(
-              `Failed to get ticker for ${instrument.instrument_name}: ${error instanceof Error ? error.message : String(error)}`,
+              `Failed to get ticker for ${instrument.instrument_name} after retries: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
