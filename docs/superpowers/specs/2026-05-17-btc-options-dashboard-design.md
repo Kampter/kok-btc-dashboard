@@ -169,28 +169,28 @@
 
 ### 4.3 模块 B：波动率分析
 
+> **已更新**：2026-05-21 升级为 Delta-based 方法，详见 [[25d-skew-design]]
+
 **用途**: 分析市场对未来波动的定价
 
-**图表 1：IV 期限结构（Term Structure）**
+**图表 1：ATM IV 期限结构（Term Structure）** ✅ 已更新
 - 类型：折线图
-- X 轴：到期日（DTE: Days to Expiry）
+- X 轴：标准期限（1M / 3M / 6M）
 - Y 轴：ATM IV（%）
-- 多条线：当前时刻 vs 24h 前 vs 7 天前（可选）
-- 来源：`get_book_summary_by_currency` 按到期日分组取 ATM strike
+- 单条线（历史对比待后续实现）
+- 来源：通过 Black-Scholes Delta 找最接近 ±0.50 Delta 的期权
 
-**图表 2：Skew 曲线**
-- 类型：多折线图
-- X 轴：Moneyness（0.8 ~ 1.2，即 80% ~ 120% 的 ATM 行权价）
-- Y 轴：IV（%）
-- 多条线：不同到期日（如 7D, 30D, 90D）
-- 来源：`get_book_summary_by_currency` 按 strike 和 expiry 分组
+**图表 2：25Δ Skew** ✅ 已更新
+- 类型：柱状图
+- X 轴：标准期限（1M / 3M / 6M）
+- Y 轴：Skew（%）= IV(Put) − IV(Call)，取 ±0.25 Delta
+- 来源：通过 Black-Scholes Delta 找最接近 ±0.25 Delta 的期权
 
-**图表 3：历史波动率 vs 隐含波动率**
-- 类型：双折线图
+**图表 3：历史波动率 (HV)** ✅ 保留
+- 类型：折线图
 - X 轴：时间（90 天）
 - Y 轴：波动率（%）
-- 线 1：历史波动率（HV，来源：`get_historical_volatility`）
-- 线 2：ATM 隐含波动率（IV，来源：聚合计算）
+- 来源：`get_historical_volatility`
 
 ---
 
