@@ -1,20 +1,24 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './database/database.module';
 import { DeribitModule } from './deribit/deribit.module';
 import { TrpcModule } from './trpc/trpc.module';
 import { ChatModule } from './chat/chat.module';
+import { SnapshotModule } from './snapshot/snapshot.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
-      ttl: 30000, // 30 seconds
+      ttl: 900000, // 15 minutes
     }),
     DatabaseModule,
     DeribitModule,
     TrpcModule,
     ChatModule,
+    SnapshotModule,
   ],
 })
 export class AppModule {}
