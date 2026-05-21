@@ -95,7 +95,7 @@ describe('VolatilityAnalysis', () => {
     expect(screen.getByText('重试')).toBeInTheDocument();
   });
 
-  it('renders IV term structure chart', () => {
+  it('renders 25Δ Skew chart', () => {
     mockedUseBookSummary.mockReturnValue({
       data: mockOptionSummaries,
       isLoading: false,
@@ -111,10 +111,10 @@ describe('VolatilityAnalysis', () => {
 
     render(<VolatilityAnalysis />);
 
-    expect(screen.getByText('IV 期限结构')).toBeInTheDocument();
+    expect(screen.getByText('25Δ Skew（按期限）')).toBeInTheDocument();
   });
 
-  it('renders skew curve chart', () => {
+  it('renders ATM IV term structure chart', () => {
     mockedUseBookSummary.mockReturnValue({
       data: mockOptionSummaries,
       isLoading: false,
@@ -130,7 +130,7 @@ describe('VolatilityAnalysis', () => {
 
     render(<VolatilityAnalysis />);
 
-    expect(screen.getByText('Skew 曲线（最近到期日）')).toBeInTheDocument();
+    expect(screen.getByText('ATM IV 期限结构')).toBeInTheDocument();
   });
 
   it('renders historical volatility chart', () => {
@@ -168,8 +168,8 @@ describe('VolatilityAnalysis', () => {
 
     render(<VolatilityAnalysis />);
 
-    expect(screen.getByText('IV 期限结构')).toBeInTheDocument();
-    expect(screen.getByText('Skew 曲线（最近到期日）')).toBeInTheDocument();
+    expect(screen.getByText('25Δ Skew（按期限）')).toBeInTheDocument();
+    expect(screen.getByText('ATM IV 期限结构')).toBeInTheDocument();
     expect(screen.getByText('历史波动率 (HV)')).toBeInTheDocument();
   });
 });

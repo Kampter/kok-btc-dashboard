@@ -2,55 +2,45 @@ import * as React from 'react';
 import { useBookSummary, useHistoricalVolatility } from '../../hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorFallback } from '../ui/error-fallback';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, Cell } from 'recharts';
+import { groupByTenor, calculate25DeltaSkew, calculateATMIV } from '../../lib/volatility';
 
 export function VolatilityAnalysis() {
   const { data: bookData, isLoading: bookLoading, isError: bookError, refetch: refetchBook } = useBookSummary('BTC', 'option');
   const { data: histVolData, isLoading: hvLoading, isError: hvError, refetch: refetchHv } = useHistoricalVolatility('BTC');
 
-  const termStructure = React.useMemo(() => {
-    if (!bookData) return [];
-    const byExpiry = new Map<string, number[]>();
-    for (const item of bookData) {
-      if (item.mark_iv > 0) {
-        const list = byExpiry.get(item.expiry) ?? [];
-        list.push(item.mark_iv);
-        byExpiry.set(item.expiry, list);
-      }
-    }
-    return Array.from(byExpiry.entries())
-      .map(([expiry, ivs]) => {
-        const sorted = ivs.sort((a, b) => a - b);
-        const median = sorted[Math.floor(sorted.length / 2)];
-        const daysToExpiry = Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        return { expiry: `${daysToExpiry}D`, iv: median, daysToExpiry };
-      })
-      .sort((a, b) => a.daysToExpiry - b.daysToExpiry)
-      .slice(0, 10);
-  }, [bookData]);
+  const groupedByTenor = React.useMemo(() =>
+    bookData && bookData.length > 0 ? groupByTenor(bookData) : new Map(),
+    [bookData],
+  );
 
-  const skewData = React.useMemo(() => {
-    if (!bookData || bookData.length === 0) return [];
-    const nearestExpiry = [...bookData].sort((a, b) => new Date(a.expiry).getTime() - new Date(b.expiry).getTime())[0]?.expiry;
-    if (!nearestExpiry) return [];
-    const btcPrice = bookData.find((i) => i.underlying_price > 0)?.underlying_price ?? 0;
-    if (btcPrice === 0) return [];
-    const nearestItems = bookData.filter((i) => i.expiry === nearestExpiry && i.mark_iv > 0);
-    const buckets = [
-      { label: '0.80', min: 0.75, max: 0.85 }, { label: '0.85', min: 0.80, max: 0.90 },
-      { label: '0.90', min: 0.85, max: 0.95 }, { label: '0.95', min: 0.90, max: 1.00 },
-      { label: '1.00', min: 0.97, max: 1.03 }, { label: '1.05', min: 1.00, max: 1.10 },
-      { label: '1.10', min: 1.05, max: 1.15 }, { label: '1.15', min: 1.10, max: 1.20 },
-      { label: '1.20', min: 1.15, max: 1.25 },
-    ];
-    return buckets.map((b) => {
-      const ivs = nearestItems
-        .filter((i) => { const moneyness = i.strike / btcPrice; return moneyness >= b.min && moneyness < b.max; })
-        .map((i) => i.mark_iv);
-      const avg = ivs.length > 0 ? ivs.reduce((a, c) => a + c, 0) / ivs.length : 0;
-      return { moneyness: b.label, iv: avg };
-    });
-  }, [bookData]);
+  const skew25Delta = React.useMemo(() => {
+    if (groupedByTenor.size === 0) return [];
+    const tenors = ['1M', '3M', '6M'] as const;
+    return tenors.map((tenor) => {
+      const items = groupedByTenor.get(tenor);
+      const skew = items ? calculate25DeltaSkew(items) : null;
+      return {
+        tenor,
+        skew: skew ?? 0,
+        hasData: skew !== null,
+      };
+    }).filter((d) => d.hasData);
+  }, [groupedByTenor]);
+
+  const termStructure = React.useMemo(() => {
+    if (groupedByTenor.size === 0) return [];
+    const tenors = ['1M', '3M', '6M'] as const;
+    return tenors.map((tenor) => {
+      const items = groupedByTenor.get(tenor);
+      const iv = items ? calculateATMIV(items) : null;
+      return {
+        tenor,
+        iv: iv ?? 0,
+        hasData: iv !== null,
+      };
+    }).filter((d) => d.hasData);
+  }, [groupedByTenor]);
 
   const hvIvData = React.useMemo(() => {
     if (!histVolData) return [];
@@ -81,32 +71,51 @@ export function VolatilityAnalysis() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base">IV 期限结构</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">25Δ Skew（按期限）</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={termStructure}>
+            <BarChart data={skew25Delta}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="expiry" stroke="#94a3b8" fontSize={12} />
+              <XAxis dataKey="tenor" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
-              <Line type="monotone" dataKey="iv" name="ATM IV" stroke="#e94560" strokeWidth={2} dot={{ fill: '#e94560', r: 4 }} />
-            </LineChart>
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                formatter={(v: unknown) => `${(v as number).toFixed(2)}%`}
+                labelFormatter={(l: unknown) => `期限: ${l}`}
+              />
+              <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+              <Bar dataKey="skew" name="25Δ Skew" radius={[4, 4, 0, 0]}>
+                {skew25Delta.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.skew >= 0 ? '#f87171' : '#4ade80'} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
+          <p className="text-xs text-muted-foreground mt-2">
+            Skew = IV(Put) − IV(Call)，取 ±0.25 Delta。正值 = 市场恐惧看跌，负值 = 市场乐观看涨。
+          </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Skew 曲线（最近到期日）</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">ATM IV 期限结构</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={skewData}>
+            <LineChart data={termStructure}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="moneyness" stroke="#94a3b8" fontSize={12} label={{ value: '行权价 / 现货价', position: 'insideBottom', offset: -2, fill: '#94a3b8', fontSize: 12 }} />
+              <XAxis dataKey="tenor" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} unit="%" />
-              <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} formatter={(v: unknown) => `${(v as number).toFixed(2)}%`} />
-              <Line type="monotone" dataKey="iv" name="IV" stroke="#4ade80" strokeWidth={2} dot={{ fill: '#4ade80', r: 4 }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                formatter={(v: unknown) => `${(v as number).toFixed(2)}%`}
+                labelFormatter={(l: unknown) => `期限: ${l}`}
+              />
+              <Line type="monotone" dataKey="iv" name="ATM IV" stroke="#e94560" strokeWidth={2} dot={{ fill: '#e94560', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
+          <p className="text-xs text-muted-foreground mt-2">
+            每个期限取最接近 ATM（±0.50 Delta）期权的 mark_iv。
+          </p>
         </CardContent>
       </Card>
 
