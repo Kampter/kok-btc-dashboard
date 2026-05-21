@@ -4,7 +4,7 @@
     "superpowers@claude-plugins-official": true
   },
   "permissions": {
-    "defaultMode": "acceptEdits",
+    "defaultMode": "auto",
     "allow": [
       "Bash(pnpm *)",
       "Bash(git status)",
