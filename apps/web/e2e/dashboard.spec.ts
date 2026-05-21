@@ -12,18 +12,22 @@ test.describe('Dashboard', () => {
 
   test('default active tab shows market overview content', async ({ page }) => {
     await page.goto('/')
+    // 点击市场概况卡片打开 Drawer
+    await page.getByRole('button', { name: '市场概况' }).click()
+    // 等待 Drawer 打开
+    await expect(page.getByRole('dialog')).toBeVisible()
+    // 断言 Drawer 内的 KPI 卡片和图表
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
   })
 
   test('switching tab updates visible content', async ({ page }) => {
     await page.goto('/')
-    // 先确认市场概况内容可见
-    await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
-    // 点击波动率分析 tab
+    // 点击波动率分析卡片打开 Drawer
     await page.getByRole('button', { name: '波动率分析' }).click()
-    // 波动率分析 tab 应显示 IV 相关图表（数据可能已缓存，不依赖新请求）
-    await expect(page.getByText('IV 期限结构').first()).toBeVisible({ timeout: 10000 })
+    // 等待 Drawer 打开并渲染内容
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByText('ATM IV 期限结构').first()).toBeVisible({ timeout: 10000 })
   })
 
   test('header shows Deribit connection status', async ({ page }) => {
@@ -34,26 +38,35 @@ test.describe('Dashboard', () => {
 
   test('rapid tab switching does not crash', async ({ page }) => {
     await page.goto('/')
-    const tabs = ['波动率分析', '持仓结构', '资金情绪', '到期分析', '市场概况']
+    const cards = ['市场概况', '波动率分析', '持仓结构', '资金情绪', '到期分析']
     for (let i = 0; i < 10; i++) {
-      const tab = tabs[i % tabs.length]
-      await page.getByRole('button', { name: tab }).click()
+      const card = cards[i % cards.length]
+      await page.getByRole('button', { name: card }).click()
+      // 等待 Drawer 打开
+      await expect(page.getByRole('dialog')).toBeVisible()
+      // 点击关闭按钮
+      await page.getByRole('button', { name: '关闭' }).click()
+      // 等待 Drawer 关闭
+      await expect(page.getByRole('dialog')).not.toBeVisible()
     }
     // Page should still be functional after rapid switching
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
   })
 
   test('all tabs render without console errors', async ({ page }) => {
-    const errors: string[] = []
+    const errors = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
     await page.goto('/')
-    const tabs = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
-    for (const tab of tabs) {
-      await page.getByRole('button', { name: tab }).click()
-      // Playwright 自动等待 toBeVisible 会处理渲染延迟，无需硬等待
+    const cards = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
+    for (const card of cards) {
+      await page.getByRole('button', { name: card }).click()
+      await expect(page.getByRole('dialog')).toBeVisible()
+      // 点击关闭按钮
+      await page.getByRole('button', { name: '关闭' }).click()
+      await expect(page.getByRole('dialog')).not.toBeVisible()
     }
 
     expect(errors.filter((e) => !e.includes('favicon'))).toHaveLength(0)
@@ -62,7 +75,7 @@ test.describe('Dashboard', () => {
 
 test.describe('Dashboard - Hydration', () => {
   test('hydrates without fatal page errors', async ({ page }) => {
-    const pageErrors: string[] = []
+    const pageErrors = []
     page.on('pageerror', (err) => {
       pageErrors.push(err.message)
     })
@@ -75,7 +88,7 @@ test.describe('Dashboard - Hydration', () => {
   })
 
   test('hydrates without DOM container errors', async ({ page }) => {
-    const consoleErrors: string[] = []
+    const consoleErrors = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text())
     })
@@ -96,10 +109,10 @@ test.describe('Dashboard - Hydration', () => {
     await page.goto('/')
     // 等待第一个 tRPC 响应返回
     await page.waitForResponse((resp) => resp.url().includes('/trpc/'), { timeout: 15000 })
-    // Playwright 的自动等待会处理渲染延迟
 
-    const btcPrice = await page.getByText(/^\$[\d,]/).first()
-    const hasNonZeroData = await btcPrice.isVisible().catch(() => false)
+    // 点击市场概况卡片打开 Drawer
+    await page.getByRole('button', { name: '市场概况' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
 
     // 如果 API 不可用，至少验证页面结构完整
     await expect(page.getByText('BTC 现货价格')).toBeVisible()
@@ -119,14 +132,18 @@ test.describe('Dashboard - Responsive', () => {
     await page.setViewportSize({ width: 768, height: 1024 })
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
-    await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
+    // 在 tablet 上也可以点击卡片打开 Drawer
+    await page.getByRole('button', { name: '市场概况' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
   })
 
   test('renders correctly on large desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
-    await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
+    // 在 desktop 上也可以点击卡片打开 Drawer
+    await page.getByRole('button', { name: '市场概况' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
   })
 })
 

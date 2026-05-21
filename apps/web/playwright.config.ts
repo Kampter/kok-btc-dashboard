@@ -26,13 +26,13 @@ export default defineConfig({
       cwd: path.resolve(__dirname, '../api'),
       stdout: 'API server running on http://localhost:3000',
       env: {
-        DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/kok_cache',
+        DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/kok_cache',
         FRONTEND_URL: 'http://localhost:5173',
       },
       timeout: 120000,
     },
     {
-      command: 'pnpm preview --port 5173',
+      command: 'pnpm preview',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
