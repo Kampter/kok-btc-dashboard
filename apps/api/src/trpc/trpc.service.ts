@@ -4,11 +4,14 @@ import { z } from 'zod';
 import { DeribitService } from '../deribit/deribit.service';
 import { ChatRouter } from '../chat/chat.router';
 import { GreeksService } from '../greeks/greeks.service';
+import { RsMonitorService } from '../rs-monitor/rs-monitor.service';
 import {
   MarketOverviewSchema,
   OptionSummarySchema,
   OptionTradeSchema,
   OIDistributionListSchema,
+  RsScoreSchema,
+  RsChartDataSchema,
   parseInstrumentName,
   getOptionTypeFromInstrumentName,
 } from '@kok/shared-types';
@@ -34,11 +37,13 @@ export class TrpcService {
     private readonly deribitService: DeribitService,
     private readonly chatRouter: ChatRouter,
     private readonly greeksService: GreeksService,
+    private readonly rsMonitorService: RsMonitorService,
   ) {
     this.appRouter = t.router({
       deribit: this.buildDeribitRouter(),
       chat: this.chatRouter.router,
       greeks: this.buildGreeksRouter(),
+      rsMonitor: this.buildRsMonitorRouter(),
     });
   }
 
@@ -388,6 +393,41 @@ export class TrpcService {
             return await this.greeksService.getExposure(input.currency);
           } catch (error) {
             handleTrpcError('Failed to fetch Greeks exposure data', error);
+          }
+        }),
+    });
+  }
+
+  private buildRsMonitorRouter() {
+    return t.router({
+      latest: t.procedure.query(async () => {
+        try {
+          const scores = await this.rsMonitorService.getLatestScores();
+          return scores.map((s) => RsScoreSchema.parse(s));
+        } catch (error) {
+          handleTrpcError('Failed to fetch latest RS scores', error);
+        }
+      }),
+
+      history: t.procedure
+        .input(z.object({ tokenSymbol: z.string(), days: z.number().default(7) }))
+        .query(async ({ input }) => {
+          try {
+            const scores = await this.rsMonitorService.getScoreHistory(input.tokenSymbol, input.days);
+            return scores.map((s) => RsScoreSchema.parse(s));
+          } catch (error) {
+            handleTrpcError('Failed to fetch RS score history', error);
+          }
+        }),
+
+      chart: t.procedure
+        .input(z.object({ tokenSymbol: z.string() }))
+        .query(async ({ input }) => {
+          try {
+            const data = await this.rsMonitorService.getTokenChartData(input.tokenSymbol);
+            return RsChartDataSchema.parse(data);
+          } catch (error) {
+            handleTrpcError('Failed to fetch RS chart data', error);
           }
         }),
     });
