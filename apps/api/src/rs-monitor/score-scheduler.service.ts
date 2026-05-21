@@ -39,14 +39,14 @@ export function calculateRSScores(
   scoredTokens.sort((a, b) => b.rsScore - a.rsScore);
 
   const total = scoredTokens.length;
-  const strongThreshold = Math.floor(total * 0.8);
-  const weakThreshold = Math.floor(total * 0.2);
+  const strongCutoff = Math.floor(total * 0.2); // top 20%
+  const weakCutoff = Math.floor(total * 0.8);   // bottom 20%
 
   scoredTokens.forEach((t, index) => {
     t.rankPosition = index + 1;
-    if (index >= strongThreshold) {
+    if (index < strongCutoff) {
       t.signal = 'strong';
-    } else if (index < weakThreshold) {
+    } else if (index >= weakCutoff) {
       t.signal = 'weak';
     } else {
       t.signal = 'neutral';
@@ -103,7 +103,8 @@ export class ScoreSchedulerService {
       const startPrice = Number(klines[0].close);
       const endPrice = Number(klines[klines.length - 1].close);
       const tokenUsdReturn = (endPrice - startPrice) / startPrice;
-      const tokenBtcReturn = tokenUsdReturn - btcReturn;
+      // 精确的 BTC 计价收益：(tokenEnd/btcEnd) / (tokenStart/btcStart) - 1
+      const tokenBtcReturn = (endPrice / btcEndPrice) / (startPrice / btcStartPrice) - 1;
 
       tokenReturns.push({
         symbol: token.token_symbol,
@@ -117,12 +118,13 @@ export class ScoreSchedulerService {
       return;
     }
 
+    const scoredAt = new Date();
     const scoredTokens = calculateRSScores(
       tokenReturns,
-      new Date().toISOString(),
+      scoredAt.toISOString(),
     );
 
-    await this.rsMonitorService.saveScores(scoredTokens, new Date());
+    await this.rsMonitorService.saveScores(scoredTokens, scoredAt);
     this.logger.log(`RS scores calculated for ${scoredTokens.length} tokens`);
   }
 }

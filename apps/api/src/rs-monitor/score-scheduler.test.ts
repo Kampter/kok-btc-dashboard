@@ -46,10 +46,9 @@ describe('calculateRSScores', () => {
     expect(normal!.rsScore).toBeLessThan(80);
   });
 
-  it('classifies top 20% as weak and bottom 20% as strong (ascending sort)', () => {
-    // Wait - the sorting is descending (highest score first = rank 1)
-    // Top 20% by rank position = strong, bottom 20% = weak
-    // With 10 tokens: ranks 1-2 = weak, ranks 9-10 = strong
+  it('classifies top 20% as strong and bottom 20% as weak', () => {
+    // Array sorted descending by rsScore: index 0 = highest score
+    // Top 20% (index 0-1) → strong, bottom 20% (index 8-9) → weak
     const inputs = Array.from({ length: 10 }, (_, i) => ({
       symbol: `TKN${i}`,
       btcReturn: (i - 5) * 0.01,
@@ -58,15 +57,15 @@ describe('calculateRSScores', () => {
 
     const results = calculateRSScores(inputs, scoredAt);
 
-    // Top 20% = bottom 2 ranks = strong
-    expect(results[8].signal).toBe('strong');
-    expect(results[9].signal).toBe('strong');
+    // Top 20% (highest scores, index 0-1) → strong
+    expect(results[0].signal).toBe('strong');
+    expect(results[1].signal).toBe('strong');
 
-    // Bottom 20% = top 2 ranks = weak
-    expect(results[0].signal).toBe('weak');
-    expect(results[1].signal).toBe('weak');
+    // Bottom 20% (lowest scores, index 8-9) → weak
+    expect(results[8].signal).toBe('weak');
+    expect(results[9].signal).toBe('weak');
 
-    // Middle 60% = neutral
+    // Middle 60% → neutral
     expect(results[2].signal).toBe('neutral');
     expect(results[7].signal).toBe('neutral');
   });
@@ -96,7 +95,7 @@ describe('calculateRSScores', () => {
     expect(results[0].tokenSymbol).toBe('ONLY');
     expect(results[0].zScore).toBe(0);
     expect(results[0].rsScore).toBe(50);
-    expect(results[0].signal).toBe('strong'); // single token, rank 1 >= floor(1 * 0.8) = 0
+    expect(results[0].signal).toBe('weak'); // single token: floor(1 * 0.2) = 0, floor(1 * 0.8) = 0, index 0 >= 0 → weak
   });
 
   it('handles negative mean with positive outliers', () => {

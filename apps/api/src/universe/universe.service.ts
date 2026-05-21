@@ -31,6 +31,10 @@ export class UniverseService implements OnModuleInit {
         updated_at     TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_token_universe_rank
+      ON token_universe(rank)
+    `);
   }
 
   async getCurrentUniverse(): Promise<UniverseRow[]> {
