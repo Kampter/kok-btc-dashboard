@@ -115,43 +115,43 @@ describe('DeribitService edge cases', () => {
   })
 
   describe('cache TTL configuration', () => {
-    it('uses 30s TTL for book summary', async () => {
+    it('uses 15min TTL for book summary', async () => {
       mockGet.mockResolvedValueOnce({ data: { result: rawBookSummaryBTC } })
       await service.getBookSummaryByCurrency('BTC', 'option')
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'book_summary_BTC_option',
         expect.anything(),
-        30000,
+        900000,
       )
     })
 
-    it('uses 30s TTL for index price', async () => {
+    it('uses 15min TTL for index price', async () => {
       mockGet.mockResolvedValueOnce({ data: { result: rawIndexPriceBTC } })
       await service.getIndexPrice('btc_usd')
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'index_price_btc_usd',
         expect.anything(),
-        30000,
+        900000,
       )
     })
 
-    it('uses 5min TTL for historical volatility', async () => {
+    it('uses 15min TTL for historical volatility', async () => {
       mockGet.mockResolvedValueOnce({ data: { result: rawHistoricalVolatilityBTC } })
       await service.getHistoricalVolatility('BTC')
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'hist_vol_BTC',
         expect.anything(),
-        300000,
+        900000,
       )
     })
 
-    it('uses 30s TTL for trades', async () => {
+    it('uses 15min TTL for trades', async () => {
       mockGet.mockResolvedValueOnce({ data: { result: rawTradesBTC } })
       await service.getLastTradesByCurrency('BTC', 'option')
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'trades_BTC_option_100',
         expect.anything(),
-        30000,
+        900000,
       )
     })
   })
@@ -187,7 +187,7 @@ describe('DeribitService edge cases', () => {
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'book_summary_BTC_option',
         persistentData,
-        30000,
+        900000,
       )
     })
 
@@ -203,13 +203,9 @@ describe('DeribitService edge cases', () => {
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'book_summary_BTC_option',
         rawBookSummaryBTC,
-        30000,
+        900000,
       )
-      expect(mockPersistentCache.set).toHaveBeenCalledWith(
-        'book_summary_BTC_option',
-        rawBookSummaryBTC,
-        600000,
-      )
+      expect(mockPersistentCache.set).not.toHaveBeenCalled()
     })
 
     it('L2 read failure degrades gracefully to API call', async () => {

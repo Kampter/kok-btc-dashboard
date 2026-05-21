@@ -5,7 +5,6 @@ import axios from 'axios';
 import { PersistentCacheService } from '../database/persistent-cache.service';
 
 const DERIBIT_API_URL = 'https://www.deribit.com/api/v2/public';
-const L2_TTL_MULTIPLIER = 20;
 
 @Injectable()
 export class DeribitService {
@@ -22,17 +21,18 @@ export class DeribitService {
   private async fetchWithCache<T>(
     cacheKey: string,
     fetcher: () => Promise<T>,
-    ttlMs = 30000,
+    ttlMs = 900000, // 15 minutes
   ): Promise<T> {
-    // L1: 内存缓存
+    // L1: Memory cache (single source of truth)
     const cached = await this.cacheManager.get<T>(cacheKey);
     if (cached) return cached;
 
-    // L2: PostgreSQL 持久化缓存
+    // L2: PostgreSQL persistent cache (only for recovery after restart)
     if (this.persistentCache) {
       try {
         const persistent = await this.persistentCache.get<T>(cacheKey);
         if (persistent) {
+          // Restore to memory from PG
           await this.cacheManager.set(cacheKey, persistent, ttlMs);
           return persistent;
         }
@@ -46,22 +46,11 @@ export class DeribitService {
 
     try {
       const result = await fetcher();
+      // Only write to memory - PG sync is handled by CacheSyncService separately
       await this.cacheManager.set(cacheKey, result, ttlMs);
-
-      if (this.persistentCache) {
-        try {
-          await this.persistentCache.set(cacheKey, result, ttlMs * L2_TTL_MULTIPLIER);
-        } catch (error) {
-          Logger.warn(
-            `L2 cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
-            'DeribitService',
-          );
-        }
-      }
-
       return result;
     } catch (error) {
-      // API 失败时尝试返回 L2 中的过期数据
+      // API failed - try returning stale data from L2
       if (this.persistentCache) {
         try {
           const stale = await this.persistentCache.get<T>(cacheKey, { includeExpired: true });
@@ -112,7 +101,7 @@ export class DeribitService {
         });
         return data.result as Array<[number, number]>;
       },
-      300000, // 5 minutes
+      900000, // 15 minutes
     );
   }
 
