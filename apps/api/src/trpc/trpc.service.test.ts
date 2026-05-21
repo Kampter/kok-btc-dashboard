@@ -1,10 +1,12 @@
 import { Test } from '@nestjs/testing'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { TRPCError } from '@trpc/server'
 import { TrpcService } from './trpc.service'
 import { DeribitService } from '../deribit/deribit.service'
 import { ChatRouter } from '../chat/chat.router'
 import { ChatService } from '../chat/chat.service'
+import { GreeksService } from '../greeks/greeks.service'
 import { rawBookSummaryBTC, rawIndexPriceBTC, rawHistoricalVolatilityBTC, rawTradesBTC } from '@kok/shared-types/fixtures'
 
 describe('TrpcService', () => {
@@ -23,6 +25,7 @@ describe('TrpcService', () => {
         TrpcService,
         ChatRouter,
         ChatService,
+        GreeksService,
         {
           provide: DeribitService,
           useValue: {
@@ -30,6 +33,15 @@ describe('TrpcService', () => {
             getIndexPrice: vi.fn(),
             getHistoricalVolatility: vi.fn(),
             getLastTradesByCurrency: vi.fn(),
+            getInstruments: vi.fn(),
+            getTicker: vi.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: vi.fn(),
+            set: vi.fn(),
           },
         },
       ],
@@ -111,8 +123,8 @@ describe('TrpcService', () => {
       { instrument_name: 'BTC-30MAY26-80000-P', strike: 80000, expiry: 1748620800000, option_type: 'P', open_interest: 1000000, underlying_price: 90000 },
       { instrument_name: 'BTC-30MAY26-90000-C', strike: 90000, expiry: 1748620800000, option_type: 'C', open_interest: 2000000, underlying_price: 90000 },
       { instrument_name: 'BTC-30MAY26-90000-P', strike: 90000, expiry: 1748620800000, option_type: 'P', open_interest: 500000, underlying_price: 90000 },
-      // Expiry 2026-06-27 (low OI, should be filtered out)
-      { instrument_name: 'BTC-27JUN26-85000-C', strike: 85000, expiry: 1751001600000, option_type: 'C', open_interest: 10000, underlying_price: 90000 },
+      // Expiry 2026-06-27 (low OI, should be filtered out: 100 * 90000 = 9M < 100M threshold)
+      { instrument_name: 'BTC-27JUN26-85000-C', strike: 85000, expiry: 1751001600000, option_type: 'C', open_interest: 100, underlying_price: 90000 },
     ]
 
     it('returns OI distribution for the nearest expiry by default', async () => {
