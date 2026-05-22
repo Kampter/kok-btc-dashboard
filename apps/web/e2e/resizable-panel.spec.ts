@@ -2,7 +2,11 @@ import { test, expect } from '@playwright/test'
 
 test.describe('AI Copilot Resizable Panel', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure clean localStorage for each test
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
     await page.waitForLoadState('networkidle')
   })
 
@@ -52,17 +56,28 @@ test.describe('AI Copilot Resizable Panel', () => {
     if (handleBox) {
       await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
       await page.mouse.down()
+      // Allow browser time to register the mousemove listener before moving
+      await page.waitForTimeout(100)
       await page.mouse.move(handleBox.x + handleBox.width / 2 + 100, handleBox.y + handleBox.height / 2)
       await page.mouse.up()
     }
 
     // Verify panel is wider after drag
+    await page.waitForTimeout(200)
     const draggedBox = await panel.boundingBox()
     expect(draggedBox!.width).toBeGreaterThan(initialBox!.width)
+
+    // Verify localStorage was updated
+    const savedWidth = await page.evaluate(() => {
+      const raw = localStorage.getItem('kok:copilot-panel')
+      return raw ? JSON.parse(raw).width : null
+    })
+    expect(savedWidth).toBeGreaterThan(380)
 
     // Reload and verify panel is still wider than default
     await page.reload()
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(200)
     const restoredBox = await panel.boundingBox()
     expect(restoredBox!.width).toBeGreaterThan(380)
   })
