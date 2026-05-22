@@ -23,6 +23,8 @@ const localStorageMock = (() => {
     setItem: (key: string, value: string) => { store[key] = value },
     removeItem: (key: string) => { delete store[key] },
     clear: () => { store = {} },
+    length: 0,
+    key: () => null,
   }
 })()
 Object.defineProperty(globalThis, 'localStorage', {
