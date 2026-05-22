@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react'
+import { memo } from 'react'
 import { ResizableDrawer } from './ResizableDrawer'
 
 export interface ModuleDrawerProps {
@@ -16,14 +16,10 @@ export const ModuleDrawer = memo(function ModuleDrawer({
 }: ModuleDrawerProps) {
   const isOpen = moduleId !== null
 
-  const handleClose = useCallback(() => {
-    onClose()
-  }, [onClose])
-
   return (
     <ResizableDrawer
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={onClose}
       title={title}
     >
       {children}

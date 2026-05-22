@@ -50,7 +50,12 @@ export const ResizableDrawer = memo(function ResizableDrawer({
   storageKey = STORAGE_KEY,
 }: ResizableDrawerProps) {
   const [isClosing, setIsClosing] = useState(false)
-  const [drawerWidth, setDrawerWidth] = useState(defaultWidth)
+  const [drawerWidth, setDrawerWidth] = useState(() => {
+    if (typeof window === 'undefined') return defaultWidth
+    const stored = readStoredWidth(storageKey, defaultWidth)
+    const viewportMax = maxWidth ?? Math.floor(window.innerWidth * 0.8)
+    return Math.max(minWidth, Math.min(viewportMax, stored))
+  })
   const [isDragging, setIsDragging] = useState(false)
   const dragStartXRef = useRef(0)
   const dragStartWidthRef = useRef(0)
@@ -60,14 +65,6 @@ export const ResizableDrawer = memo(function ResizableDrawer({
 
   // Keep ref in sync with state
   drawerWidthRef.current = drawerWidth
-
-  // Read stored width on mount
-  useEffect(() => {
-    const stored = readStoredWidth(storageKey, defaultWidth)
-    const viewportMax = maxWidth ?? Math.floor(window.innerWidth * 0.8)
-    const clamped = Math.max(minWidth, Math.min(viewportMax, stored))
-    setDrawerWidth(clamped)
-  }, [defaultWidth, maxWidth, minWidth, storageKey])
 
   // Update max width when viewport changes
   useEffect(() => {
@@ -153,6 +150,9 @@ export const ResizableDrawer = memo(function ResizableDrawer({
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('touchmove', handleMouseMove)
       window.removeEventListener('touchend', handleMouseUp)
+      // Recover body styles if component unmounts during drag
+      document.body.style.cursor = originalBodyCursorRef.current
+      document.body.style.userSelect = originalBodyUserSelectRef.current
     }
   }, [isDragging, maxWidth, minWidth, storageKey])
 
