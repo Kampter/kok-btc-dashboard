@@ -20,6 +20,7 @@ describe('ModuleDrawer', () => {
       </ModuleDrawer>
     )
     expect(screen.queryByTestId('drawer-content')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('resizable-drawer')).not.toBeInTheDocument()
   })
 
   it('renders content when moduleId is provided', () => {
@@ -30,6 +31,7 @@ describe('ModuleDrawer', () => {
     )
     expect(screen.getByTestId('drawer-content')).toBeInTheDocument()
     expect(screen.getByText('市场概况')).toBeInTheDocument()
+    expect(screen.getByTestId('resizable-drawer')).toBeInTheDocument()
   })
 
   it('calls onClose when close button is clicked', async () => {
@@ -40,7 +42,7 @@ describe('ModuleDrawer', () => {
       </ModuleDrawer>
     )
     fireEvent.click(screen.getByRole('button', { name: /关闭/i }))
-    // Close is delayed by 200ms for animation
+    // Close is delayed by 200ms for animation in ResizableDrawer
     vi.advanceTimersByTime(250)
     await waitFor(() => {
       expect(handleClose).toHaveBeenCalledTimes(1)
@@ -57,5 +59,14 @@ describe('ModuleDrawer', () => {
     expect(document.body.style.overflow).toBe('hidden')
     // Cleanup restores original overflow
     document.body.style.overflow = originalOverflow
+  })
+
+  it('renders resize handle from ResizableDrawer', () => {
+    render(
+      <ModuleDrawer moduleId="overview" onClose={vi.fn()}>
+        <TestContent />
+      </ModuleDrawer>
+    )
+    expect(screen.getByTestId('resize-handle')).toBeInTheDocument()
   })
 })
