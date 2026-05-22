@@ -186,3 +186,111 @@ test.describe('Dashboard - Error States', () => {
     await expect(page.getByText('加载失败').first()).toBeVisible({ timeout: 10000 })
   })
 })
+
+test.describe('Dashboard - Drawer Resize', () => {
+  test('can resize drawer by dragging handle', async ({ page }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await openModule(page, '市场概况')
+
+    const drawer = page.getByTestId('resizable-drawer')
+    const handle = page.getByTestId('resize-handle')
+
+    // Get initial width
+    const initialWidth = await drawer.evaluate((el) => el.getBoundingClientRect().width)
+    expect(initialWidth).toBe(520)
+
+    // Drag handle to the left to widen drawer
+    const handleBox = await handle.boundingBox()
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(handleBox.x - 200, handleBox.y + handleBox.height / 2)
+      await page.mouse.up()
+    }
+
+    // Verify width increased
+    const newWidth = await drawer.evaluate((el) => el.getBoundingClientRect().width)
+    expect(newWidth).toBeGreaterThan(520)
+  })
+
+  test('drawer width respects minimum boundary', async ({ page }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await openModule(page, '市场概况')
+
+    const drawer = page.getByTestId('resizable-drawer')
+    const handle = page.getByTestId('resize-handle')
+
+    // Drag handle far to the right to shrink beyond min
+    const handleBox = await handle.boundingBox()
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(handleBox.x + 500, handleBox.y + handleBox.height / 2)
+      await page.mouse.up()
+    }
+
+    // Verify width is not below 480
+    const width = await drawer.evaluate((el) => el.getBoundingClientRect().width)
+    expect(width).toBeGreaterThanOrEqual(480)
+  })
+
+  test('drawer width respects maximum boundary', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await openModule(page, '市场概况')
+
+    const drawer = page.getByTestId('resizable-drawer')
+    const handle = page.getByTestId('resize-handle')
+
+    // Drag handle far to the left to expand beyond 80%
+    const handleBox = await handle.boundingBox()
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(handleBox.x - 800, handleBox.y + handleBox.height / 2)
+      await page.mouse.up()
+    }
+
+    // Verify width is not above 80% of 1440 = 1152
+    const width = await drawer.evaluate((el) => el.getBoundingClientRect().width)
+    expect(width).toBeLessThanOrEqual(1152)
+  })
+
+  test('remembers drawer width after close and reopen', async ({ page }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await openModule(page, '市场概况')
+
+    const drawer = page.getByTestId('resizable-drawer')
+    const handle = page.getByTestId('resize-handle')
+
+    // Resize to a custom width
+    const handleBox = await handle.boundingBox()
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(handleBox.x - 300, handleBox.y + handleBox.height / 2)
+      await page.mouse.up()
+    }
+
+    const customWidth = await drawer.evaluate((el) => el.getBoundingClientRect().width)
+    expect(customWidth).toBeGreaterThan(520)
+
+    // Close and reopen
+    await closeModule(page)
+    await openModule(page, '市场概况')
+
+    // Verify width persisted
+    const persistedWidth = await page.getByTestId('resizable-drawer').evaluate(
+      (el) => el.getBoundingClientRect().width
+    )
+    expect(persistedWidth).toBe(customWidth)
+  })
+})
