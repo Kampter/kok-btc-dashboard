@@ -58,7 +58,7 @@ export class GreeksService {
 
         const is429 =
           lastError.message.includes('429') ||
-          (error as Record<string, unknown>)?.response?.status === 429;
+          (error as { response?: { status?: number } })?.response?.status === 429;
 
         if (is429 && attempt < maxRetries) {
           const delayMs = 2000 * Math.pow(2, attempt);
