@@ -15,7 +15,7 @@ Object.defineProperty(globalThis.Element.prototype, 'getBoundingClientRect', {
   value: () => ({ width: 800, height: 600, top: 0, left: 0, bottom: 600, right: 800 }),
 })
 
-// jsdom localStorage mock
+// jsdom doesn't provide localStorage - mock it
 const localStorageMock = (() => {
   let store: Record<string, string> = {}
   return {

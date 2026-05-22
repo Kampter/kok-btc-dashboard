@@ -25,6 +25,32 @@ pnpm lint             # 全量 lint
 pnpm typecheck        # 全量类型检查
 ```
 
+## 架构决策记录（ADR）
+
+### ADR-001: Monorepo 结构（pnpm workspace）
+
+**决策**: 使用 pnpm workspace + TypeScript Project References 组织三目录结构。
+
+**包边界**:
+- `packages/shared-types` — 前后端共享的 Zod Schema + tRPC router 类型定义
+- `apps/web` — TanStack Start 前端（Vite + React 19 + SSR）
+- `apps/api` — NestJS 后端（tRPC + Deribit 代理）
+
+**理由**:
+- shared-types 作为类型单一真相源，避免前后端类型漂移
+- pnpm workspace 提供高效的包间链接和依赖去重
+- Project References 使 `tsc --build` 能增量编译，CI 更快
+
+### ADR-002: 前后端类型契约（tRPC + Zod）
+
+**决策**: 前后端通过 tRPC 共享类型安全的 API 契约，Zod Schema 定义运行时验证。
+
+**流程**: 添加新端点时，先在 `packages/shared-types` 定义 Zod Schema 和 router 类型 → 后端实现 resolver → 前端消费 hook。
+
+**理由**:
+- 端到端类型安全：修改 Schema 后，前后端同时获得编译错误
+- 运行时验证防止 Deribit API 响应格式变化导致的数据污染
+
 ## 开发规范
 
 所有开发任务遵循 superpowers 技能体系，详见 [docs/SKILLS.md](docs/SKILLS.md)。

@@ -18,7 +18,7 @@
 |---|------|---------|
 | 1 | `vitest.workspace.ts` | Root Vitest workspace config |
 | 2 | `apps/api/vitest.config.ts` | Backend Vitest config (unplugin-swc) |
-| 3 | `apps/web/src/test/setup.ts` | Frontend test initialization (jest-dom, cleanup) |
+| 3 | `apps/web/app/test/setup.ts` | Frontend test initialization (jest-dom, cleanup) |
 | 4 | `packages/shared-types/src/fixtures/raw/bookSummary.ts` | Deribit API raw response fixture |
 | 5 | `packages/shared-types/src/fixtures/raw/indexPrice.ts` | Deribit index price raw fixture |
 | 6 | `packages/shared-types/src/fixtures/raw/historicalVolatility.ts` | HV raw fixture |
@@ -48,9 +48,9 @@
 
 | # | File | Purpose |
 |---|------|---------|
-| 1 | `apps/web/src/lib/utils.test.ts` | `cn()` utility tests |
-| 2 | `apps/web/src/components/metrics/KPICard.test.tsx` | KPI card rendering |
-| 3 | `apps/web/src/components/modules/MarketOverview.test.tsx` | Module with mocked hooks |
+| 1 | `apps/web/app/lib/utils.test.ts` | `cn()` utility tests |
+| 2 | `apps/web/app/components/metrics/KPICard.test.tsx` | KPI card rendering |
+| 3 | `apps/web/app/components/modules/MarketOverview.test.tsx` | Module with mocked hooks |
 
 ### Files to Create (E2E, 1)
 
@@ -220,11 +220,11 @@ git commit -m "chore: add api vitest config with unplugin-swc"
 ### Task 4: Create Frontend Test Setup
 
 **Files:**
-- Create: `apps/web/src/test/setup.ts`
+- Create: `apps/web/app/test/setup.ts`
 
 **Context:** `apps/web/vitest.config.ts` already declares `setupFiles: ['./src/test/setup.ts']`, but the file is missing. This causes every frontend test run to fail with "cannot find setup file."
 
-- [ ] **Step 1: Create `apps/web/src/test/setup.ts`**
+- [ ] **Step 1: Create `apps/web/app/test/setup.ts`**
 
 ```ts
 import '@testing-library/jest-dom/vitest'
@@ -250,7 +250,7 @@ Expected: passes with 0 tests (no test files yet), no "setup file not found" err
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/web/src/test/setup.ts
+git add apps/web/app/test/setup.ts
 git commit -m "chore: add frontend vitest setup file"
 ```
 
@@ -1186,7 +1186,7 @@ git commit -m "test(shared): add Zod schema boundary tests"
 ### Task 11: Frontend — lib/utils Unit Tests
 
 **Files:**
-- Create: `apps/web/src/lib/utils.test.ts`
+- Create: `apps/web/app/lib/utils.test.ts`
 
 **Context:** The `cn()` utility merges Tailwind classes via `clsx` + `tailwind-merge`. It's a pure function — perfect for unit testing.
 
@@ -1242,7 +1242,7 @@ Expected: 5 tests pass.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/web/src/lib/utils.test.ts
+git add apps/web/app/lib/utils.test.ts
 git commit -m "test(web): add cn() utility unit tests"
 ```
 
@@ -1251,7 +1251,7 @@ git commit -m "test(web): add cn() utility unit tests"
 ### Task 12: Frontend — KPICard Component Tests
 
 **Files:**
-- Create: `apps/web/src/components/metrics/KPICard.test.tsx`
+- Create: `apps/web/app/components/metrics/KPICard.test.tsx`
 
 **Context:** `KPICard` is a pure presentational component. It receives `title`, `value`, `change`, `changeType` props and renders a Card with styled text.
 
@@ -1328,7 +1328,7 @@ Expected: 6 tests pass.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/web/src/components/metrics/KPICard.test.tsx
+git add apps/web/app/components/metrics/KPICard.test.tsx
 git commit -m "test(web): add KPICard component tests"
 ```
 
@@ -1337,7 +1337,7 @@ git commit -m "test(web): add KPICard component tests"
 ### Task 13: Frontend — MarketOverview Component Tests
 
 **Files:**
-- Create: `apps/web/src/components/modules/MarketOverview.test.tsx`
+- Create: `apps/web/app/components/modules/MarketOverview.test.tsx`
 
 **Context:** `MarketOverview` uses `useMarketOverview()` and `useBookSummary()` hooks from `../../hooks/useDashboardData`. We mock the entire hooks module to avoid setting up tRPC + TanStack Query providers in tests.
 
@@ -1434,7 +1434,7 @@ Expected: 3 tests pass.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/web/src/components/modules/MarketOverview.test.tsx
+git add apps/web/app/components/modules/MarketOverview.test.tsx
 git commit -m "test(web): add MarketOverview component tests"
 ```
 
@@ -1540,9 +1540,9 @@ Expected output summary:
  ✓  packages/shared-types/src/schemas/trade.test.ts (3)
  ✓  apps/api/src/deribit/deribit.service.test.ts (6)
  ✓  apps/api/src/trpc/trpc.service.test.ts (5)
- ✓  apps/web/src/lib/utils.test.ts (5)
- ✓  apps/web/src/components/metrics/KPICard.test.tsx (6)
- ✓  apps/web/src/components/modules/MarketOverview.test.tsx (3)
+ ✓  apps/web/app/lib/utils.test.ts (5)
+ ✓  apps/web/app/components/metrics/KPICard.test.tsx (6)
+ ✓  apps/web/app/components/modules/MarketOverview.test.tsx (3)
 
  Test Files  8 passed (8)
       Tests  38 passed (38)
@@ -1615,7 +1615,7 @@ Follow Red-Green-Refactor:
 | Install backend test deps | Task 1 |
 | Create vitest.workspace.ts | Task 2 |
 | Create apps/api/vitest.config.ts | Task 3 |
-| Create apps/web/src/test/setup.ts | Task 4 |
+| Create apps/web/app/test/setup.ts | Task 4 |
 | Raw fixtures | Task 5 |
 | Derived fixtures + factories | Task 6 |
 | Fixtures consistency test | Task 7 |

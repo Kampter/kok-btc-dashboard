@@ -4,7 +4,7 @@
 
 **Goal:** 在 Kok Dashboard 中搭建一个最基础的 AI 对话面板框架，包含前端固定分栏 UI、后端 NestJS ChatModule、tRPC streaming endpoint，以及前后端基础集成。
 
-**Architecture:** 前端使用 React + Tailwind 构建固定分栏对话面板；后端使用 NestJS + OpenAI SDK（Anthropic 兼容层）构建 ChatModule；前后端通过 tRPC streaming mutation 通信。本期仅搭框架，具体 AI 逻辑、Tool 实现、System Prompt 留空给后续迭代。
+**Architecture:** 前端使用 React + Tailwind 构建固定分栏对话面板；后端使用 NestJS + OpenAI SDK（Moonshot 兼容层）构建 ChatModule；前后端通过 tRPC streaming mutation 通信。本期仅搭框架，具体 AI 逻辑、Tool 实现、System Prompt 留空给后续迭代。
 
 **Tech Stack:** React 19, Tailwind CSS v4, NestJS, tRPC, OpenAI SDK, Vercel AI SDK (`ai`)
 
@@ -123,8 +123,8 @@ export class ChatService {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
-      baseURL: 'https://api.anthropic.com/v1/',
+      apiKey: process.env.MOONSHOT_API_KEY || '',
+      baseURL: 'https://api.moonshot.cn/v1',
     });
   }
 
@@ -136,7 +136,7 @@ export class ChatService {
       const systemPrompt = buildSystemPrompt(context);
 
       const stream = await this.openai.chat.completions.create({
-        model: 'claude-sonnet-4-6',
+        model: 'kimi-k2.6',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -1050,7 +1050,7 @@ git commit -m "feat: complete Agent Chat Panel basic framework"
 | 固定分栏对话面板 UI | Task 5, 6 |
 | 后端 NestJS ChatModule | Task 2 |
 | tRPC streaming endpoint | Task 3 |
-| OpenAI SDK（Anthropic 兼容层） | Task 2 |
+| OpenAI SDK（Moonshot 兼容层） | Task 2 |
 | Tool 定义框架 | Task 4 |
 | System prompt 框架 | Task 2 |
 | DashboardContext | Task 2, 7 |
