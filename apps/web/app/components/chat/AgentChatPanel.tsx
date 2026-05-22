@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useAgentChat } from '../../hooks/useAgentChat.js'
 import { useResizablePanel } from '../../hooks/useResizablePanel.js'
 import { ChatMessage } from './ChatMessage.js'
@@ -14,6 +14,7 @@ export function AgentChatPanel() {
   const isDragging = useRef(false)
   const startX = useRef(0)
   const startWidth = useRef(width)
+  const [, setDragTick] = useState(0)
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -29,6 +30,7 @@ export function AgentChatPanel() {
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
     window.removeEventListener('mousemove', handleMouseMove)
+    setDragTick((t) => t + 1)
   }, [handleMouseMove])
 
   const onMouseDown = useCallback(
