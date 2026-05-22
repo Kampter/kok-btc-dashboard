@@ -64,7 +64,7 @@ export class CandleSchedulerService {
         let after: string | undefined;
 
         while (allCandles.length < HISTORY_LIMIT) {
-          const candles = await this.okxService.getCandles(token.inst_id, '1H', 100);
+          const candles = await this.okxService.getHistoryCandles(token.inst_id, '1H', 100, after);
           if (candles.length === 0) break;
 
           allCandles.push(...candles);

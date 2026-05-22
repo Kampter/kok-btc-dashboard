@@ -14,10 +14,25 @@ export class OkxService {
   });
 
   async getCandles(instId: string, bar: string, limit: number): Promise<OkxCandle[]> {
+    return this.fetchCandles('/api/v5/market/candles', instId, bar, limit);
+  }
+
+  async getHistoryCandles(instId: string, bar: string, limit: number, after?: string): Promise<OkxCandle[]> {
+    return this.fetchCandles('/api/v5/market/history-candles', instId, bar, limit, after);
+  }
+
+  private async fetchCandles(
+    endpoint: string,
+    instId: string,
+    bar: string,
+    limit: number,
+    after?: string,
+  ): Promise<OkxCandle[]> {
     try {
-      const response = await this.client.get('/api/v5/market/candles', {
-        params: { instId, bar, limit },
-      });
+      const params: Record<string, string | number> = { instId, bar, limit };
+      if (after) params.after = after;
+
+      const response = await this.client.get(endpoint, { params });
 
       const data = response.data?.data ?? [];
       return data.map((row: string[]) =>

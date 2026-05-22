@@ -64,7 +64,8 @@ export class RsMonitorService implements OnModuleInit {
         z_score       NUMERIC(6, 4),
         signal        TEXT CHECK (signal IN ('strong', 'weak', 'neutral')),
         rank_position INTEGER NOT NULL,
-        created_at    TIMESTAMPTZ DEFAULT NOW()
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(scored_at, token_symbol)
       )
     `);
     await this.pool.query(`
@@ -134,7 +135,8 @@ export class RsMonitorService implements OnModuleInit {
       for (const score of scores) {
         await client.query(
           `INSERT INTO rs_scores (scored_at, token_symbol, rs_score, btc_return_7d, raw_return_7d, z_score, signal, rank_position)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (scored_at, token_symbol) DO NOTHING`,
           [
             scoredAt,
             score.tokenSymbol,
@@ -214,7 +216,7 @@ export class RsMonitorService implements OnModuleInit {
         LIMIT 168
       `, [btcInstId]),
       this.pool.query<{ ts: string; rs_score: number }>(`
-        SELECT scored_at::text as ts, rs_score::numeric as rs_score
+        SELECT (EXTRACT(EPOCH FROM scored_at) * 1000)::bigint::text as ts, rs_score::numeric as rs_score
         FROM rs_scores
         WHERE token_symbol = $1 AND scored_at >= NOW() - INTERVAL '7 days'
         ORDER BY scored_at ASC
