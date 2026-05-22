@@ -1,12 +1,12 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
-async function openModule(page: any, name: string) {
+async function openModule(page: Page, name: string) {
   await page.getByRole('button', { name }).click()
   // Wait for drawer animation
   await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 5000 })
 }
 
-async function closeModule(page: any) {
+async function closeModule(page: Page) {
   const closeButton = page.getByRole('button', { name: '关闭' })
   if (await closeButton.isVisible().catch(() => false)) {
     await closeButton.click()
@@ -76,8 +76,8 @@ test.describe('Dashboard', () => {
     const modules = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
     for (const mod of modules) {
       await openModule(page, mod)
-      // Wait briefly for content to render
-      await page.waitForTimeout(500)
+      // Wait for loading skeleton to disappear before closing
+      await page.waitForSelector('.animate-pulse', { state: 'hidden', timeout: 10000 })
       await closeModule(page)
     }
 
