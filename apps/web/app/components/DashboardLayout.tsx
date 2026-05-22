@@ -66,7 +66,7 @@ export function DashboardLayout() {
       </div>
 
       <ResizableDrawer
-        moduleId={activeModule}
+        isOpen={!!activeModule}
         title={activeDetail?.title}
         onClose={handleCloseDrawer}
       >

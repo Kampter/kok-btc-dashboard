@@ -8,11 +8,16 @@ import { TrpcService } from './trpc/trpc.service';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+/** 开发环境支持 localhost 多个端口（Vite 端口被占用时会自动递增） */
+const CORS_ORIGIN = process.env.NODE_ENV === 'production'
+  ? FRONTEND_URL
+  : [FRONTEND_URL, /^http:\/\/localhost:517[3-9]$/, /^http:\/\/localhost:518\d$/];
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: FRONTEND_URL,
+    origin: CORS_ORIGIN,
     credentials: true,
   });
 
