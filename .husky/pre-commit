@@ -1,0 +1,19 @@
+#!/bin/sh
+# Pre-commit hook: run typecheck and lint on staged files
+
+# Type check API (most critical - shared-types must be built first)
+echo "🔍 Type checking API..."
+pnpm --filter @kok/shared-types build
+pnpm --filter @kok/api typecheck || {
+  echo "❌ API type check failed. Fix type errors before committing."
+  exit 1
+}
+
+# Type check Web
+echo "🔍 Type checking Web..."
+pnpm --filter @kok/web typecheck || {
+  echo "❌ Web type check failed. Fix type errors before committing."
+  exit 1
+}
+
+echo "✅ Type checks passed."

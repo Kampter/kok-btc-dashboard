@@ -1,7 +1,21 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+
+async function openModule(page: Page, name: string) {
+  await page.getByRole('button', { name }).click()
+  // 等待 Drawer 打开
+  await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 5000 })
+}
+
+async function closeModule(page: Page) {
+  const closeButton = page.getByRole('button', { name: '关闭' })
+  if (await closeButton.isVisible().catch(() => false)) {
+    await closeButton.click()
+    await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 })
+  }
+}
 
 test.describe('Dashboard', () => {
-  test('loads with all 5 tabs visible', async ({ page }) => {
+  test('loads with all module cards visible', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     await expect(page.getByRole('button', { name: '波动率分析' })).toBeVisible()
@@ -10,32 +24,29 @@ test.describe('Dashboard', () => {
     await expect(page.getByRole('button', { name: '到期分析' })).toBeVisible()
   })
 
-  test('default active tab shows market overview content', async ({ page }) => {
+  test('market overview card opens drawer with detail content', async ({ page }) => {
     await page.goto('/')
-
     await page.waitForLoadState('networkidle')
 
-    // 点击市场概况卡片打开 Drawer
-    await page.getByRole('button', { name: '市场概况' }).click()
-    // 等待 Drawer 打开
-    await expect(page.getByRole('dialog')).toBeVisible()
-    // 断言 Drawer 内的 KPI 卡片和图表
+    await openModule(page, '市场概况')
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
     await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
   })
 
-  test('switching tab updates visible content', async ({ page }) => {
+  test('switching module updates drawer content', async ({ page }) => {
     await page.goto('/')
-
     await page.waitForLoadState('networkidle')
 
-    // 点击波动率分析卡片打开 Drawer
-    await page.getByRole('button', { name: '波动率分析' }).click()
-    // 等待 Drawer 打开并渲染内容
-    await expect(page.getByRole('dialog')).toBeVisible()
+    // 打开市场概况
+    await openModule(page, '市场概况')
+    await expect(page.getByText('24h 交易量分布（按到期日）')).toBeVisible()
 
-    await expect(page.getByText('ATM IV 期限结构').first()).toBeVisible({ timeout: 15000 })
-
+    // 关闭并切换到波动率分析
+    await closeModule(page)
+    await openModule(page, '波动率分析')
+    // 等待 loading skeleton 消失
+    await page.waitForSelector('.animate-pulse', { state: 'hidden', timeout: 10000 })
+    await expect(page.getByText('ATM IV 期限结构')).toBeVisible({ timeout: 10000 })
   })
 
   test('header shows Deribit connection status', async ({ page }) => {
@@ -44,43 +55,38 @@ test.describe('Dashboard', () => {
     await expect(page.getByText('自动刷新 30s')).toBeVisible()
   })
 
-  test('rapid tab switching does not crash', async ({ page }) => {
+  test('rapid module switching does not crash', async ({ page }) => {
     await page.goto('/')
-
     await page.waitForLoadState('networkidle')
 
-    const cards = ['市场概况', '波动率分析', '持仓结构', '资金情绪', '到期分析']
+    const modules = ['市场概况', '波动率分析', '持仓结构', '资金情绪', '到期分析']
     for (let i = 0; i < 10; i++) {
-      const card = cards[i % cards.length]
-      await page.getByRole('button', { name: card }).click()
-      // 等待 Drawer 打开
-      await expect(page.getByRole('dialog')).toBeVisible()
-      // 点击关闭按钮
-      await page.getByRole('button', { name: '关闭' }).click()
-      // 等待 Drawer 关闭
-      await expect(page.getByRole('dialog')).not.toBeVisible()
+      const mod = modules[i % modules.length]
+      await closeModule(page)
+      await openModule(page, mod)
+      // 短暂等待内容渲染
+      await page.waitForTimeout(200)
     }
-    // Page should still be functional after rapid switching
+    await closeModule(page)
+    // 页面应仍然可用
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
   })
 
-  test('all tabs render without console errors', async ({ page }) => {
+  test('all modules render without console errors', async ({ page }) => {
     const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
     await page.goto('/')
-
     await page.waitForLoadState('networkidle')
 
-    const cards = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
-    for (const card of cards) {
-      await page.getByRole('button', { name: card }).click()
-      await expect(page.getByRole('dialog')).toBeVisible()
-      // 点击关闭按钮
-      await page.getByRole('button', { name: '关闭' }).click()
-      await expect(page.getByRole('dialog')).not.toBeVisible()
+    const modules = ['波动率分析', '持仓结构', '资金情绪', '到期分析']
+    for (const mod of modules) {
+      await openModule(page, mod)
+      // 等待 loading skeleton 消失后再关闭
+      await page.waitForSelector('.animate-pulse', { state: 'hidden', timeout: 10000 })
+      await closeModule(page)
     }
 
     expect(errors.filter((e) => !e.includes('favicon'))).toHaveLength(0)
@@ -95,7 +101,6 @@ test.describe('Dashboard - Hydration', () => {
     })
 
     await page.goto('/')
-    // 等待网络空闲（所有初始请求完成）后再断言
     await page.waitForLoadState('networkidle')
 
     expect(pageErrors).toHaveLength(0)
@@ -124,11 +129,13 @@ test.describe('Dashboard - Hydration', () => {
     // 等待第一个 tRPC 响应返回
     await page.waitForResponse((resp) => resp.url().includes('/trpc/'), { timeout: 15000 })
 
-    // 点击市场概况卡片打开 Drawer
-    await page.getByRole('button', { name: '市场概况' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
+    // 检查 Overview Grid 显示非零数据
+    const btcPrice = await page.getByText(/\$[\d,.]+B/).first()
+    const hasNonZeroData = await btcPrice.isVisible().catch(() => false)
+    expect(hasNonZeroData).toBe(true)
 
-    // 如果 API 不可用，至少验证页面结构完整
+    // 打开 Drawer 验证详细内容
+    await openModule(page, '市场概况')
     await expect(page.getByText('BTC 现货价格')).toBeVisible()
     await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
@@ -148,8 +155,8 @@ test.describe('Dashboard - Responsive', () => {
     await page.waitForLoadState('networkidle')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     // 在 tablet 上也可以点击卡片打开 Drawer
-    await page.getByRole('button', { name: '市场概况' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
+    await openModule(page, '市场概况')
+    await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
 
   test('renders correctly on large desktop', async ({ page }) => {
@@ -158,23 +165,24 @@ test.describe('Dashboard - Responsive', () => {
     await page.waitForLoadState('networkidle')
     await expect(page.getByRole('button', { name: '市场概况' })).toBeVisible()
     // 在 desktop 上也可以点击卡片打开 Drawer
-    await page.getByRole('button', { name: '市场概况' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
+    await openModule(page, '市场概况')
+    await expect(page.getByText('总持仓量 (OI)')).toBeVisible()
   })
 })
 
 test.describe('Dashboard - Error States', () => {
   test('shows loading skeleton on initial load', async ({ page }) => {
     await page.goto('/')
-    // Skeleton should be visible briefly before data loads
+    // Skeleton 应在数据加载前短暂可见
     await expect(page.locator('.animate-pulse').first()).toBeVisible()
   })
 
   test('retry button appears on error', async ({ page }) => {
-    // Block API requests to simulate error
+    // 阻止 API 请求以模拟错误
     await page.route('**/trpc/**', (route) => route.abort())
     await page.goto('/')
-    // Error fallback should eventually appear
+    // Error fallback 应最终出现在 Drawer 中
+    await openModule(page, '市场概况')
     await expect(page.getByText('加载失败').first()).toBeVisible({ timeout: 10000 })
   })
 })

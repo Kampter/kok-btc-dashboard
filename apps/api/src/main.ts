@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { NestFactory } from '@nestjs/core';
+import type { Response } from 'express';
 import { AppModule } from './app.module';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { TrpcService } from './trpc/trpc.service';
@@ -23,7 +24,14 @@ async function bootstrap() {
     })
   );
 
+  // Health check endpoint for CI/E2E readiness probe
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.get('/health', (_req: unknown, res: Response) => {
+    res.status(200).send('ok');
+  });
+
   await app.listen(PORT);
   console.log(`API server running on http://localhost:${PORT}`);
+  console.log(`E2E_TEST=${process.env.E2E_TEST}`);
 }
 bootstrap();

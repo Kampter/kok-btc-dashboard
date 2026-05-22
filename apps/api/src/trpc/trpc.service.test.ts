@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { TRPCError } from '@trpc/server'
 import { TrpcService } from './trpc.service'
@@ -37,7 +38,7 @@ describe('TrpcService', () => {
           },
         },
         {
-          provide: 'CACHE_MANAGER',
+          provide: CACHE_MANAGER,
           useValue: {
             get: vi.fn(),
             set: vi.fn(),
