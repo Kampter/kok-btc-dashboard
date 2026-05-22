@@ -44,10 +44,11 @@ describe('ChatService streamChat', () => {
       results.push(item);
     }
 
-    expect(results).toHaveLength(3);
+    expect(results).toHaveLength(4);
     expect(results[0]).toEqual({ type: 'text', text: 'Hello' });
     expect(results[1]).toEqual({ type: 'text', text: ' world' });
     expect(results[2]).toEqual({ type: 'text', text: '!' });
+    expect(results[3]).toEqual({ type: 'done' });
   });
 
   it('should skip empty chunks', async () => {
@@ -70,9 +71,10 @@ describe('ChatService streamChat', () => {
       results.push(item);
     }
 
-    expect(results).toHaveLength(2);
+    expect(results).toHaveLength(3);
     expect(results[0]).toEqual({ type: 'text', text: 'First' });
     expect(results[1]).toEqual({ type: 'text', text: 'Last' });
+    expect(results[2]).toEqual({ type: 'done' });
   });
 
   it('should yield error on stream failure', async () => {
