@@ -15,10 +15,8 @@ interface DashboardContext {
   lastUpdated: string
 }
 
-let idCounter = 0
-
 function generateId(): string {
-  return `msg-${Date.now()}-${idCounter++}`
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
 export function useAgentChat(context: DashboardContext) {
@@ -32,13 +30,27 @@ export function useAgentChat(context: DashboardContext) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesRef = useRef(messages)
+  const subscriptionRef = useRef<{
+    unsubscribe: () => void
+  } | null>(null)
 
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
 
+  // Cleanup subscription on unmount
+  useEffect(() => {
+    return () => {
+      subscriptionRef.current?.unsubscribe()
+    }
+  }, [])
+
   const sendMessage = useCallback(
     (content: string) => {
+      // Cleanup previous subscription before creating a new one
+      subscriptionRef.current?.unsubscribe()
+      subscriptionRef.current = null
+
       const userMsgId = generateId()
       const assistantId = generateId()
 
@@ -58,9 +70,9 @@ export function useAgentChat(context: DashboardContext) {
         { id: assistantId, role: 'assistant', content: '' },
       ])
 
-      const historyForApi = allMessages.map(({ id: _id, ...m }) => m)
+      const historyForApi = allMessages.map(({ id, ...m }) => m)
 
-      trpcClient.chat.stream.subscribe(
+      subscriptionRef.current = trpcClient.chat.stream.subscribe(
         {
           messages: historyForApi,
           context,
