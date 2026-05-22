@@ -1,5 +1,5 @@
 interface ResizableHandleProps {
-  onResizeStart: () => void
+  onResizeStart: (e: React.MouseEvent) => void
 }
 
 export function ResizableHandle({ onResizeStart }: ResizableHandleProps) {

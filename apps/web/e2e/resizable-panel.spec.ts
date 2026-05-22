@@ -43,20 +43,28 @@ test.describe('AI Copilot Resizable Panel', () => {
   })
 
   test('persists width after reload', async ({ page }) => {
+    const panel = page.locator('[data-testid="chat-panel"]')
+    const initialBox = await panel.boundingBox()
+
     // Resize panel by simulating drag on the handle
     const handle = page.getByTestId('resizable-handle')
-    const box = await handle.boundingBox()
-    if (box) {
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    const handleBox = await handle.boundingBox()
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
       await page.mouse.down()
-      await page.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2)
+      await page.mouse.move(handleBox.x + handleBox.width / 2 + 100, handleBox.y + handleBox.height / 2)
       await page.mouse.up()
     }
+
+    // Verify panel is wider after drag
+    const draggedBox = await panel.boundingBox()
+    expect(draggedBox!.width).toBeGreaterThan(initialBox!.width)
 
     // Reload and verify panel is still wider than default
     await page.reload()
     await page.waitForLoadState('networkidle')
-    await expect(page.getByText('AI Copilot')).toBeVisible()
+    const restoredBox = await panel.boundingBox()
+    expect(restoredBox!.width).toBeGreaterThan(380)
   })
 
   test('main content adapts when panel is collapsed', async ({ page }) => {

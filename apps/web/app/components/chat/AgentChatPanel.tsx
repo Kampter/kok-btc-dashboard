@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { useAgentChat } from '../../hooks/useAgentChat.js'
 import { useResizablePanel } from '../../hooks/useResizablePanel.js'
 import { ChatMessage } from './ChatMessage.js'
@@ -11,41 +11,39 @@ export function AgentChatPanel() {
     lastUpdated: new Date().toISOString(),
   })
   const { width, isCollapsed, setWidth, toggleCollapse } = useResizablePanel()
-  const [isDragging, setIsDragging] = useState(false)
+  const isDragging = useRef(false)
   const startX = useRef(0)
   const startWidth = useRef(width)
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return
-      // Capture initial mouse position on first mousemove to avoid needing mousedown event
-      if (startX.current === 0) {
-        startX.current = e.clientX
-        return
-      }
+      if (!isDragging.current) return
       const delta = e.clientX - startX.current
       setWidth(startWidth.current + delta)
     },
-    [isDragging, setWidth]
+    [setWidth]
   )
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
+    isDragging.current = false
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
     window.removeEventListener('mousemove', handleMouseMove)
   }, [handleMouseMove])
 
-  const onMouseDown = useCallback(() => {
-    if (isCollapsed) return
-    setIsDragging(true)
-    startX.current = 0
-    startWidth.current = width
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp, { once: true })
-  }, [isCollapsed, width, handleMouseMove, handleMouseUp])
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (isCollapsed) return
+      isDragging.current = true
+      startX.current = e.clientX
+      startWidth.current = width
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp, { once: true })
+    },
+    [isCollapsed, width, handleMouseMove, handleMouseUp]
+  )
 
   useEffect(() => {
     return () => {
@@ -89,13 +87,13 @@ export function AgentChatPanel() {
     <div
       // setWidth clamps to [280, 600] in useResizablePanel
       data-testid="chat-panel"
-      className="flex flex-col h-screen bg-card border-r border-border relative"
-      style={{ width: `${width}px`, transition: isDragging ? 'none' : 'width 0.2s ease-out' }}
+      className="flex flex-col h-screen bg-card border-r border-border relative pl-[2px]"
+      style={{ width: `${width}px`, transition: isDragging.current ? 'none' : 'width 0.2s ease-out' }}
     >
       {/* Primary accent line on left edge */}
       <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary" />
 
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border ml-[2px]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h2 className="text-sm font-semibold">AI Copilot</h2>
         <button
           onClick={toggleCollapse}
@@ -119,7 +117,7 @@ export function AgentChatPanel() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 ml-[2px]" style={{ backgroundColor: '#0a0a0c' }}>
+      <div className="flex-1 overflow-y-auto p-4 bg-chat-area">
         {messages.map((msg) => (
           <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
         ))}
@@ -136,7 +134,7 @@ export function AgentChatPanel() {
         )}
       </div>
 
-      <div className="ml-[2px]">
+      <div>
         <ChatInput onSubmit={sendMessage} isLoading={isLoading} />
       </div>
 
