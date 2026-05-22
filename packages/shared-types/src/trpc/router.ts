@@ -8,6 +8,11 @@ import type { RsScore, RsChartData } from '../schemas/rs-monitor.js';
 
 const t = initTRPC.create();
 
+export type StreamEvent =
+  | { type: 'text'; text: string }
+  | { type: 'error'; message: string }
+  | { type: 'done' };
+
 // 此 router 仅用于推导 AppRouter 类型，实际实现在 apps/api/src/trpc/trpc.service.ts
 export const appRouter = t.router({
   deribit: t.router({
@@ -51,7 +56,7 @@ export const appRouter = t.router({
           }),
         }),
       )
-      .mutation(async function* () {
+      .subscription(async function* () {
         yield { type: 'text' as const, text: '' };
       }),
   }),

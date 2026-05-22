@@ -1,4 +1,4 @@
-import { createTRPCClient, httpBatchLink } from '@trpc/client'
+import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from '@trpc/client'
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import { QueryClient } from '@tanstack/react-query'
 import type { AppRouter } from '@kok/shared-types'
@@ -9,8 +9,14 @@ const API_URL = typeof window !== 'undefined'
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
-    httpBatchLink({
-      url: API_URL,
+    splitLink({
+      condition: (op) => op.type === 'subscription',
+      true: httpSubscriptionLink({
+        url: API_URL,
+      }),
+      false: httpBatchLink({
+        url: API_URL,
+      }),
     }),
   ],
 })

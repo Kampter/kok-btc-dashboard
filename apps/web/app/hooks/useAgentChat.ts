@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { trpcClient } from '../lib/trpc.js';
+import type { StreamEvent } from '@kok/shared-types';
 
 interface Message {
   id: string;
@@ -13,6 +15,10 @@ interface DashboardContext {
   lastUpdated: string;
 }
 
+function generateId(): string {
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export function useAgentChat(context: DashboardContext) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -23,35 +29,85 @@ export function useAgentChat(context: DashboardContext) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const messagesRef = useRef(messages);
+  const subscriptionRef = useRef<{
+    unsubscribe: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Cleanup subscription on unmount
+  useEffect(() => {
+    return () => {
+      subscriptionRef.current?.unsubscribe();
+    };
+  }, []);
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    (content: string) => {
+      // Cleanup previous subscription before creating a new one
+      subscriptionRef.current?.unsubscribe();
+      subscriptionRef.current = null;
+
+      const userMsgId = generateId();
+      const assistantId = generateId();
+
       const userMsg: Message = {
-        id: Date.now().toString(),
+        id: userMsgId,
         role: 'user',
         content,
       };
 
-      setMessages((prev) => [...prev, userMsg]);
+      const allMessages = [...messagesRef.current, userMsg];
+      setMessages(allMessages);
       setIsLoading(true);
       setError(null);
 
-      try {
-        // TODO: 后续迭代接入真实的 tRPC streaming mutation
-        await new Promise((resolve) => setTimeout(resolve, 800));
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: '' },
+      ]);
 
-        const assistantMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `收到问题："${content}"\n\n（此处将展示 AI 分析结果，当前为框架占位。后续迭代将接入真实的 Claude 流式响应。）`,
-        };
+      const historyForApi = allMessages.map(({ id: _id, ...m }) => m);
 
-        setMessages((prev) => [...prev, assistantMsg]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '发送失败');
-      } finally {
-        setIsLoading(false);
-      }
+      subscriptionRef.current = trpcClient.chat.stream.subscribe(
+        {
+          messages: historyForApi,
+          context,
+        },
+        {
+          onData(event: StreamEvent) {
+            if (event.type === 'text') {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantId
+                    ? { ...msg, content: msg.content + event.text }
+                    : msg,
+                ),
+              );
+            } else if (event.type === 'error') {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantId
+                    ? { ...msg, content: `错误：${event.message}` }
+                    : msg,
+                ),
+              );
+              setError(event.message);
+              setIsLoading(false);
+            }
+          },
+          onError(err) {
+            setError(err.message);
+            setIsLoading(false);
+          },
+          onComplete() {
+            setIsLoading(false);
+          },
+        },
+      );
     },
     [context],
   );

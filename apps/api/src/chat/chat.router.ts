@@ -27,7 +27,7 @@ export class ChatRouter {
           }),
         }),
       )
-      .mutation(async function* (this: ChatRouter, { input }) {
+      .subscription(async function* (this: ChatRouter, { input }) {
         yield* this.chatService.streamChat(input.messages, input.context);
       }),
   });

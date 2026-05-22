@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import type { StreamEvent } from '@kok/shared-types';
 import { buildSystemPrompt, type DashboardContext } from './prompts/system-prompt';
 
 @Injectable()
@@ -10,9 +11,7 @@ export class ChatService {
   async *streamChat(
     messages: Array<{ role: string; content: string }>,
     context: DashboardContext,
-  ): AsyncGenerator<
-    { type: 'text'; text: string } | { type: 'error'; message: string }
-  > {
+  ): AsyncGenerator<StreamEvent> {
     const apiKey = process.env.MOONSHOT_API_KEY;
     if (!apiKey) {
       yield { type: 'error', message: 'MOONSHOT_API_KEY environment variable is not set' };
@@ -47,6 +46,8 @@ export class ChatService {
           yield { type: 'text', text };
         }
       }
+
+      yield { type: 'done' };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       yield { type: 'error', message };
