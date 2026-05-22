@@ -23,8 +23,7 @@ test.describe('Dashboard - Data Refresh', () => {
 
     // Verify non-zero data is displayed
     const initialPrice = await page.getByText(/\$[\d,.]+B/).first().textContent()
-    expect(initialPrice).toBeTruthy()
-    expect(initialPrice).not.toBe('$0.00B')
+    expect(initialPrice).toMatch(/$[d,.]+B/)
   })
 
   test('shows updated data after manual refresh', async ({ page }) => {

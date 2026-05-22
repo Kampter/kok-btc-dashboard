@@ -9,7 +9,7 @@ vi.mock('openai', () => {
     default: class FakeOpenAI {
       chat = {
         completions: {
-          create: (...args: any[]) => mockCreate(...args),
+          create: (...args: Parameters<typeof mockCreate>) => mockCreate(...args),
         },
       };
     },
