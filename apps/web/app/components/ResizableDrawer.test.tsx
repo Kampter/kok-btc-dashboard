@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ResizableDrawer } from './ResizableDrawer'
 
@@ -13,10 +13,17 @@ function renderDrawer(props: Partial<Parameters<typeof ResizableDrawer>[0]> = {}
 
 describe('ResizableDrawer localStorage persistence', () => {
   const STORAGE_KEY = 'kok:drawer:width'
+  let originalGetItem: Storage['getItem']
 
   beforeEach(() => {
+    originalGetItem = localStorage.getItem.bind(localStorage)
     localStorage.clear()
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    // Ensure localStorage.getItem is always restored, even if a test throws
+    localStorage.getItem = originalGetItem
   })
 
   it('reads width from localStorage on mount', () => {
@@ -56,17 +63,17 @@ describe('ResizableDrawer localStorage persistence', () => {
 
     const handle = screen.getByTestId('resize-handle')
 
-    // Simulate drag start
+    // Simulate drag: handle at x=520, drag to x=620 → drawer narrows by 100px
+    // Drawer right edge moves 100px right → width decreases by 100: 520 - 100 = 420
+    // But minWidth is 480, so it should be clamped to 480
     fireEvent.mouseDown(handle, { clientX: 520 })
-    // Simulate drag move (move 100px to the right, which makes drawer narrower)
     fireEvent.mouseMove(window, { clientX: 620 })
-    // Simulate drag end
     fireEvent.mouseUp(window)
 
-    // localStorage should have been updated
+    // localStorage should contain the exact width (420 clamped to min 480)
     await waitFor(() => {
       const stored = localStorage.getItem(STORAGE_KEY)
-      expect(stored).toBeTruthy()
+      expect(stored).toBe('480')
     })
   })
 
@@ -89,8 +96,6 @@ describe('ResizableDrawer localStorage persistence', () => {
   })
 
   it('recovers from localStorage error', () => {
-    // Simulate localStorage being unavailable
-    const originalGetItem = localStorage.getItem
     localStorage.getItem = vi.fn(() => {
       throw new Error('localStorage unavailable')
     })
@@ -99,7 +104,5 @@ describe('ResizableDrawer localStorage persistence', () => {
 
     const drawer = screen.getByTestId('resizable-drawer')
     expect(drawer).toHaveStyle({ width: '520px' })
-
-    localStorage.getItem = originalGetItem
   })
 })

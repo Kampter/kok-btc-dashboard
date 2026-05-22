@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
-async function openModule(page: any, name: string) {
+async function openModule(page: Page, name: string) {
   await page.getByRole('button', { name }).click()
   await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 5000 })
 }
 
-async function closeModule(page: any) {
+async function closeModule(page: Page) {
   const closeButton = page.getByRole('button', { name: '关闭' })
   if (await closeButton.isVisible().catch(() => false)) {
     await closeButton.click()
@@ -14,16 +14,17 @@ async function closeModule(page: any) {
 }
 
 test.describe('Dashboard - Data Refresh', () => {
-  test('auto-refreshes data periodically', async ({ page }) => {
+  test('loads initial data successfully', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
     // Wait for initial data load
     await page.waitForResponse((resp) => resp.url().includes('/trpc/'), { timeout: 15000 })
 
-    // Get initial price value
+    // Verify non-zero data is displayed
     const initialPrice = await page.getByText(/\$[\d,.]+B/).first().textContent()
     expect(initialPrice).toBeTruthy()
+    expect(initialPrice).not.toBe('$0.00B')
   })
 
   test('shows updated data after manual refresh', async ({ page }) => {
@@ -62,8 +63,8 @@ test.describe('Dashboard - Network Errors', () => {
   })
 
   test('shows error state when API times out', async ({ page }) => {
-    await page.route('**/trpc/**', async (route) => {
-      // Never respond, simulating timeout
+    await page.route('**/trpc/**', (route) => {
+      route.abort('timedout')
     })
 
     await page.goto('/')
