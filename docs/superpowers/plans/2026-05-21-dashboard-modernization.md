@@ -4,7 +4,7 @@
 
 **Goal:** 将 BTC Options Dashboard 从 Tab 切换布局重构为概览网格 + 右侧详情抽屉，并升级视觉系统为极简精致风格。
 
-**Architecture:** 保留所有现有模块组件内部逻辑，仅重构布局层。新增 OverviewCard、ModuleDrawer、OverviewGrid 三个核心组件，6 个模块概览子组件各自消费已有 hooks 获取轻量数据。使用 CSS keyframe 动画实现过渡效果，不引入 Framer Motion。
+**Architecture:** 保留所有现有模块组件内部逻辑，仅重构布局层。新增 OverviewCard、ModuleDrawer、OverviewGrid 三个核心组件，7 个模块概览子组件各自消费已有 hooks 获取轻量数据。使用 CSS keyframe 动画实现过渡效果，不引入 Framer Motion。
 
 **Tech Stack:** React 19, Tailwind CSS v4, shadcn/ui, Recharts, tRPC, TanStack Query, Geist 字体
 
