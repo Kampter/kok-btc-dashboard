@@ -83,17 +83,13 @@ export class ScoreSchedulerService {
 
     const btcStartPrice = Number(btcKlines[0].close);
     const btcEndPrice = Number(btcKlines[btcKlines.length - 1].close);
-    const btcReturn = (btcEndPrice - btcStartPrice) / btcStartPrice;
 
-    interface TokenReturn {
-      symbol: string;
-      btcReturn: number;
-      rawReturn: number;
-    }
-
-    const tokenReturns: TokenReturn[] = [];
+    const tokenReturns: TokenReturnInput[] = [];
 
     for (const token of universe) {
+      // Skip BTC self-scoring (relative BTC return is always ~0)
+      if (token.token_symbol === 'BTC') continue;
+
       const klines = await this.rsMonitorService.getKlines(`${token.token_symbol}-USDT`, '1H', 168);
       if (klines.length < 100) {
         this.logger.warn(`Insufficient data for ${token.token_symbol} (${klines.length} candles), skipping`);

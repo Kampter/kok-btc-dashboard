@@ -6,7 +6,7 @@ import type { RsScore, RsChartData, RsChartPoint } from '@kok/shared-types';
 interface KlineRow {
   inst_id: string;
   ts: string;
-  close: number;
+  close: string; // pg numeric returns string, converted via Number() at call sites
 }
 
 interface ScoreRow {
@@ -116,6 +116,15 @@ export class RsMonitorService implements OnModuleInit {
       LIMIT $3
     `, [instId, timeframe, limit]);
     return result.rows.reverse();
+  }
+
+  async getKlineCount(instId: string, timeframe: string): Promise<number> {
+    const result = await this.pool.query<{ count: string }>(`
+      SELECT COUNT(*) as count
+      FROM ohlcv
+      WHERE inst_id = $1 AND timeframe = $2
+    `, [instId, timeframe]);
+    return Number(result.rows[0]?.count ?? 0);
   }
 
   async saveScores(scores: RsScore[], scoredAt: Date): Promise<void> {
