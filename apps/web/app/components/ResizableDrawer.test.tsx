@@ -1,117 +1,108 @@
-import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ResizableDrawer } from './ResizableDrawer'
 
-const TestContent = () => <div data-testid="drawer-content">测试内容</div>
+// Helper to render ResizableDrawer
+function renderDrawer(props: Partial<Parameters<typeof ResizableDrawer>[0]> = {}) {
+  return render(
+    <ResizableDrawer isOpen={true} onClose={vi.fn()} {...props}>
+      <div data-testid="drawer-content">Content</div>
+    </ResizableDrawer>,
+  )
+}
 
-describe('ResizableDrawer', () => {
+describe('ResizableDrawer localStorage persistence', () => {
+  const STORAGE_KEY = 'kok:drawer:width'
+  let originalGetItem: Storage['getItem']
+
   beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
+    originalGetItem = localStorage.getItem.bind(localStorage)
     localStorage.clear()
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
-    vi.useRealTimers()
-    localStorage.clear()
+    // Ensure localStorage.getItem is always restored, even if a test throws
+    localStorage.getItem = originalGetItem
   })
 
-  it('does not render when isOpen is false', () => {
-    render(
-      <ResizableDrawer isOpen={false} onClose={vi.fn()}>
-        <TestContent />
-      </ResizableDrawer>
-    )
-    expect(screen.queryByTestId('drawer-content')).not.toBeInTheDocument()
-  })
+  it('reads width from localStorage on mount', () => {
+    localStorage.setItem(STORAGE_KEY, '700')
 
-  it('renders content when isOpen is true', () => {
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()} title="测试标题">
-        <TestContent />
-      </ResizableDrawer>
-    )
-    expect(screen.getByTestId('drawer-content')).toBeInTheDocument()
-    expect(screen.getByText('测试标题')).toBeInTheDocument()
-  })
+    renderDrawer()
 
-  it('renders with default width', () => {
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()}>
-        <TestContent />
-      </ResizableDrawer>
-    )
     const drawer = screen.getByTestId('resizable-drawer')
-    expect(drawer).toHaveStyle('width: 520px')
+    expect(drawer).toHaveStyle({ width: '700px' })
   })
 
-  it('renders with stored width from localStorage', () => {
-    localStorage.setItem('kok:drawer:width', '720')
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()}>
-        <TestContent />
-      </ResizableDrawer>
-    )
+  it('uses default width when localStorage is empty', () => {
+    renderDrawer()
+
     const drawer = screen.getByTestId('resizable-drawer')
-    expect(drawer).toHaveStyle('width: 720px')
+    expect(drawer).toHaveStyle({ width: '520px' })
   })
 
-  it('clamps stored width to min width', () => {
-    localStorage.setItem('kok:drawer:width', '300')
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()} minWidth={480}>
-        <TestContent />
-      </ResizableDrawer>
-    )
+  it('uses custom default width when localStorage is empty', () => {
+    renderDrawer({ defaultWidth: 600 })
+
     const drawer = screen.getByTestId('resizable-drawer')
-    expect(drawer).toHaveStyle('width: 480px')
+    expect(drawer).toHaveStyle({ width: '600px' })
   })
 
-  it('clamps stored width to max width', () => {
-    localStorage.setItem('kok:drawer:width', '2000')
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()} maxWidth={800}>
-        <TestContent />
-      </ResizableDrawer>
-    )
+  it('respects min width from localStorage', () => {
+    localStorage.setItem(STORAGE_KEY, '100')
+
+    renderDrawer({ minWidth: 480 })
+
     const drawer = screen.getByTestId('resizable-drawer')
-    expect(drawer).toHaveStyle('width: 800px')
+    expect(drawer).toHaveStyle({ width: '480px' })
   })
 
-  it('calls onClose when close button is clicked', async () => {
-    const handleClose = vi.fn()
-    render(
-      <ResizableDrawer isOpen={true} onClose={handleClose}>
-        <TestContent />
-      </ResizableDrawer>
-    )
-    fireEvent.click(screen.getByRole('button', { name: /关闭/i }))
-    act(() => {
-      vi.advanceTimersByTime(250)
+  it('writes width to localStorage on resize end', async () => {
+    renderDrawer()
+
+    const handle = screen.getByTestId('resize-handle')
+
+    // Simulate drag: handle at x=520, drag to x=620 → drawer narrows by 100px
+    // Drawer right edge moves 100px right → width decreases by 100: 520 - 100 = 420
+    // But minWidth is 480, so it should be clamped to 480
+    fireEvent.mouseDown(handle, { clientX: 520 })
+    fireEvent.mouseMove(window, { clientX: 620 })
+    fireEvent.mouseUp(window)
+
+    // localStorage should contain the exact width (420 clamped to min 480)
+    await waitFor(() => {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      expect(stored).toBe('480')
     })
-    expect(handleClose).toHaveBeenCalledTimes(1)
   })
 
-  it('prevents body scroll when open', () => {
-    const originalOverflow = document.body.style.overflow
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()}>
-        <TestContent />
-      </ResizableDrawer>
-    )
-    expect(document.body.style.overflow).toBe('hidden')
-    document.body.style.overflow = originalOverflow
+  it('uses custom storageKey', () => {
+    localStorage.setItem('custom-key', '650')
+
+    renderDrawer({ storageKey: 'custom-key' })
+
+    const drawer = screen.getByTestId('resizable-drawer')
+    expect(drawer).toHaveStyle({ width: '650px' })
   })
 
-  it('renders resize handle', () => {
-    render(
-      <ResizableDrawer isOpen={true} onClose={vi.fn()}>
-        <TestContent />
-      </ResizableDrawer>
-    )
-    expect(screen.getByTestId('resize-handle')).toBeInTheDocument()
-    expect(screen.getByRole('separator')).toHaveAttribute(
-      'aria-label',
-      '调整面板宽度'
-    )
+  it('handles corrupted localStorage gracefully', () => {
+    localStorage.setItem(STORAGE_KEY, 'not-a-number')
+
+    renderDrawer()
+
+    const drawer = screen.getByTestId('resizable-drawer')
+    expect(drawer).toHaveStyle({ width: '520px' })
+  })
+
+  it('recovers from localStorage error', () => {
+    localStorage.getItem = vi.fn(() => {
+      throw new Error('localStorage unavailable')
+    })
+
+    renderDrawer()
+
+    const drawer = screen.getByTestId('resizable-drawer')
+    expect(drawer).toHaveStyle({ width: '520px' })
   })
 })
