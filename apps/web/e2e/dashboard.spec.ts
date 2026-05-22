@@ -65,7 +65,7 @@ test.describe('Dashboard', () => {
   })
 
   test('all tabs render without console errors', async ({ page }) => {
-    const errors = []
+    const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
@@ -89,7 +89,7 @@ test.describe('Dashboard', () => {
 
 test.describe('Dashboard - Hydration', () => {
   test('hydrates without fatal page errors', async ({ page }) => {
-    const pageErrors = []
+    const pageErrors: string[] = []
     page.on('pageerror', (err) => {
       pageErrors.push(err.message)
     })
@@ -102,7 +102,7 @@ test.describe('Dashboard - Hydration', () => {
   })
 
   test('hydrates without DOM container errors', async ({ page }) => {
-    const consoleErrors = []
+    const consoleErrors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text())
     })
