@@ -193,7 +193,9 @@ test.describe('Dashboard - Drawer Resize', () => {
     await page.waitForLoadState('networkidle')
 
     await openModule(page, '市场概况')
-    // Wait for animation to settle
+    // TODO: 等待 drawer 入场动画完成（300ms slideInRight）。
+    // Playwright 的 waitForSelector 只能确认元素存在，无法检测 CSS animation 结束。
+    // 使用固定延迟等待动画稳定，避免并发时元素定位超时。
     await page.waitForTimeout(500)
 
     const drawer = page.getByTestId('resizable-drawer')

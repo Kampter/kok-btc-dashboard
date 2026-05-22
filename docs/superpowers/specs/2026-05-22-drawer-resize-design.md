@@ -57,13 +57,15 @@ export interface ResizableDrawerProps {
 1. `mousedown`/`touchstart` 在 handle 上触发 → 开始拖拽
 2. 绑定 window 级 `mousemove`/`touchmove` 和 `mouseup`/`touchend`
 3. 拖拽时：
-   - `newWidth = window.innerWidth - clientX`
+   - 记录拖拽起始时的鼠标位置和 drawer 宽度
+   - `delta = dragStartX - clientX`
+   - `newWidth = dragStartWidth + delta`
    - clamp：`Math.max(minWidth, Math.min(maxWidth, newWidth))`
    - 实时更新宽度状态，无 CSS transition（避免拖拽卡顿）
    - 给 `document.body` 添加 `cursor: col-resize` 和 `user-select: none`（防止拖拽时选中文本）
 4. `mouseup`/`touchend` 时：
    - 清理事件监听器
-   - 恢复 body 样式
+   - 恢复 body 原始样式（保存并还原 cursor 和 user-select）
    - 将最终宽度写入 localStorage
 
 ### 窗口 resize 处理

@@ -54,6 +54,12 @@ export const ResizableDrawer = memo(function ResizableDrawer({
   const [isDragging, setIsDragging] = useState(false)
   const dragStartXRef = useRef(0)
   const dragStartWidthRef = useRef(0)
+  const drawerWidthRef = useRef(drawerWidth)
+  const originalBodyCursorRef = useRef('')
+  const originalBodyUserSelectRef = useRef('')
+
+  // Keep ref in sync with state
+  drawerWidthRef.current = drawerWidth
 
   // Read stored width on mount
   useEffect(() => {
@@ -105,12 +111,16 @@ export const ResizableDrawer = memo(function ResizableDrawer({
 
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
       dragStartXRef.current = clientX
-      dragStartWidthRef.current = drawerWidth
+      dragStartWidthRef.current = drawerWidthRef.current
+
+      // Save original body styles
+      originalBodyCursorRef.current = document.body.style.cursor
+      originalBodyUserSelectRef.current = document.body.style.userSelect
 
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
     },
-    [drawerWidth]
+    []
   )
 
   useEffect(() => {
@@ -127,9 +137,10 @@ export const ResizableDrawer = memo(function ResizableDrawer({
 
     const handleMouseUp = () => {
       setIsDragging(false)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      writeStoredWidth(storageKey, drawerWidth)
+      // Restore original body styles
+      document.body.style.cursor = originalBodyCursorRef.current
+      document.body.style.userSelect = originalBodyUserSelectRef.current
+      writeStoredWidth(storageKey, drawerWidthRef.current)
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -143,7 +154,7 @@ export const ResizableDrawer = memo(function ResizableDrawer({
       window.removeEventListener('touchmove', handleMouseMove)
       window.removeEventListener('touchend', handleMouseUp)
     }
-  }, [isDragging, drawerWidth, maxWidth, minWidth, storageKey])
+  }, [isDragging, maxWidth, minWidth, storageKey])
 
   if (!isOpen && !isClosing) return null
 
@@ -180,9 +191,11 @@ export const ResizableDrawer = memo(function ResizableDrawer({
         <div
           className={cn(
             'absolute left-0 top-0 bottom-0 w-3 -translate-x-1/2 z-50',
-            'cursor-col-resize touch-none',
-            'bg-muted/30 hover:bg-primary/40 transition-colors',
+            'cursor-col-resize touch-none transition-colors',
             'flex items-center justify-center',
+            isDragging
+              ? 'bg-primary/50 w-4'
+              : 'bg-muted/30 hover:bg-primary/40',
           )}
           onMouseDown={handleResizeStart}
           onTouchStart={handleResizeStart}
