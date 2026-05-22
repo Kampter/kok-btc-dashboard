@@ -51,6 +51,34 @@ pnpm typecheck        # 全量类型检查
 - 端到端类型安全：修改 Schema 后，前后端同时获得编译错误
 - 运行时验证防止 Deribit API 响应格式变化导致的数据污染
 
+
+## 测试策略
+
+基于风险分层，而非覆盖率导向。
+
+### 核心原则
+
+1. **测试行为，不测试实现** — 验证"输入 X 输出 Y"，而非"调用了哪个函数"
+2. **风险导向** — 金融计算错误（Greeks、OI）最高优先级，展示层最低
+3. **Mostly Integration** — 业务逻辑用集成测试，纯数学用单元测试
+4. **删除比添加重要** — 低价值测试的维护成本拖累整个套件
+
+### 风险分层
+
+| 风险 | 模块 | 测试类型 | 示例 |
+|------|------|----------|------|
+| 高 | Greeks、OI Distribution、Volatility | 精确数值 Unit | total_gex=117000、resistance=81250 |
+| 中 | Drawer、Chat、Dashboard 切换 | Integration / E2E | localStorage 持久化、流式响应、错误恢复 |
+| 低 | 静态文本、shadcn 组件、样式 | Snapshot 或不测 | — |
+
+### 反模式（禁止）
+
+- 纯委托测试（Controller 转发参数、Scheduler 调用方法、AppModule 编译）
+- 过度 Mock（mock 所有子组件只验证 testid、mock hook 只验证文本）
+- 无数值断言（toBeDefined() 替代 toBe(80000)）
+- 模板化重复（5 个模块组件测试结构完全相同）
+
+
 ## 开发规范
 
 所有开发任务遵循 superpowers 技能体系，详见 [docs/SKILLS.md](docs/SKILLS.md)。
