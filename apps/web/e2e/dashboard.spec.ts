@@ -193,6 +193,8 @@ test.describe('Dashboard - Drawer Resize', () => {
     await page.waitForLoadState('networkidle')
 
     await openModule(page, '市场概况')
+    // Wait for animation to settle
+    await page.waitForTimeout(500)
 
     const drawer = page.getByTestId('resizable-drawer')
     const handle = page.getByTestId('resize-handle')
@@ -220,6 +222,7 @@ test.describe('Dashboard - Drawer Resize', () => {
     await page.waitForLoadState('networkidle')
 
     await openModule(page, '市场概况')
+    await page.waitForTimeout(500)
 
     const drawer = page.getByTestId('resizable-drawer')
     const handle = page.getByTestId('resize-handle')
@@ -244,6 +247,7 @@ test.describe('Dashboard - Drawer Resize', () => {
     await page.waitForLoadState('networkidle')
 
     await openModule(page, '市场概况')
+    await page.waitForTimeout(500)
 
     const drawer = page.getByTestId('resizable-drawer')
     const handle = page.getByTestId('resize-handle')
@@ -267,6 +271,7 @@ test.describe('Dashboard - Drawer Resize', () => {
     await page.waitForLoadState('networkidle')
 
     await openModule(page, '市场概况')
+    await page.waitForTimeout(500)
 
     const drawer = page.getByTestId('resizable-drawer')
     const handle = page.getByTestId('resize-handle')
@@ -286,6 +291,7 @@ test.describe('Dashboard - Drawer Resize', () => {
     // Close and reopen
     await closeModule(page)
     await openModule(page, '市场概况')
+    await page.waitForTimeout(500)
 
     // Verify width persisted
     const persistedWidth = await page.getByTestId('resizable-drawer').evaluate(
