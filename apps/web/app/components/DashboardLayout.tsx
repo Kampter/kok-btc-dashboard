@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { AgentChatPanel } from './chat/AgentChatPanel'
-import { ModuleDrawer } from './ModuleDrawer'
+import { ResizableDrawer } from './ResizableDrawer'
 import { OverviewGrid, type ModuleId } from './OverviewGrid'
 import { MarketOverview } from './modules/MarketOverview'
 import { VolatilityAnalysis } from './modules/VolatilityAnalysis'
@@ -65,13 +65,13 @@ export function DashboardLayout() {
         </div>
       </div>
 
-      <ModuleDrawer
+      <ResizableDrawer
         moduleId={activeModule}
         title={activeDetail?.title}
         onClose={handleCloseDrawer}
       >
         {DetailComponent && <DetailComponent />}
-      </ModuleDrawer>
+      </ResizableDrawer>
     </div>
   )
 }
