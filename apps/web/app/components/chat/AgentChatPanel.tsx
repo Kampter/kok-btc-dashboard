@@ -16,20 +16,12 @@ export function AgentChatPanel() {
   const startX = useRef(0)
   const startWidth = useRef(width)
 
-  const handleResizeStart = useCallback(() => {
-    if (isCollapsed) return
-    isDragging.current = true
-    startX.current = 0 // will be set on first mousemove
-    startWidth.current = width
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }, [isCollapsed, width])
-
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isDragging.current) return
       if (startX.current === 0) {
         startX.current = e.clientX
+        return
       }
       const delta = e.clientX - startX.current
       setWidth(startWidth.current + delta)
@@ -38,17 +30,22 @@ export function AgentChatPanel() {
   )
 
   const handleMouseUp = useCallback(() => {
-    if (!isDragging.current) return
     isDragging.current = false
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
-  }, [])
+    window.removeEventListener('mousemove', handleMouseMove)
+  }, [handleMouseMove])
 
-  // Attach global mouse events during drag
   const onMouseDown = useCallback(() => {
+    if (isCollapsed) return
+    isDragging.current = true
+    startX.current = 0
+    startWidth.current = width
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp, { once: true })
-  }, [handleMouseMove, handleMouseUp])
+  }, [isCollapsed, width, handleMouseMove, handleMouseUp])
 
   if (isCollapsed) {
     return (
