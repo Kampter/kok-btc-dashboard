@@ -40,3 +40,26 @@ export function useGreeksExposure(currency: string = 'BTC') {
     refetchInterval: 30000,
   });
 }
+
+export function useRSLatest() {
+  return useQuery({
+    ...trpc.rsMonitor.latest.queryOptions(),
+    refetchInterval: 60000,
+  });
+}
+
+export function useRSHistory(tokenSymbol: string, days = 7) {
+  return useQuery({
+    ...trpc.rsMonitor.history.queryOptions({ tokenSymbol, days }),
+    enabled: !!tokenSymbol,
+    staleTime: 300000,
+  });
+}
+
+export function useRSChart(tokenSymbol: string) {
+  return useQuery({
+    ...trpc.rsMonitor.chart.queryOptions({ tokenSymbol }),
+    enabled: !!tokenSymbol,
+    staleTime: 300000,
+  });
+}

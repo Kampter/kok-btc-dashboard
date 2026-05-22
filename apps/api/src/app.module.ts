@@ -7,6 +7,9 @@ import { TrpcModule } from './trpc/trpc.module';
 import { ChatModule } from './chat/chat.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { GreeksModule } from './greeks/greeks.module';
+import { OkxModule } from './okx/okx.module';
+import { UniverseModule } from './universe/universe.module';
+import { RsMonitorModule } from './rs-monitor/rs-monitor.module';
 
 @Module({
   imports: [
@@ -21,6 +24,9 @@ import { GreeksModule } from './greeks/greeks.module';
     ChatModule,
     SnapshotModule,
     GreeksModule,
+    OkxModule,
+    UniverseModule,
+    RsMonitorModule,
   ],
 })
 export class AppModule {}

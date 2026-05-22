@@ -9,6 +9,7 @@ import { FundingSentiment } from './modules/FundingSentiment'
 import { ExpiryAnalysis } from './modules/ExpiryAnalysis'
 import { OIDistribution } from './modules/OIDistribution'
 import { GreeksDashboard } from './modules/GreeksDashboard'
+import { RSMonitor } from './modules/RSMonitor'
 
 const MODULE_DETAILS: Record<ModuleId, { title: string; component: React.ComponentType }> = {
   overview: { title: '市场概况', component: MarketOverview },
@@ -18,6 +19,7 @@ const MODULE_DETAILS: Record<ModuleId, { title: string; component: React.Compone
   expiry: { title: '到期分析', component: ExpiryAnalysis },
   oi: { title: 'OI 分布', component: OIDistribution },
   greeks: { title: 'Greeks 风险暴露', component: GreeksDashboard },
+  'rs-monitor': { title: '相对强度监控', component: RSMonitor },
 }
 
 export function DashboardLayout() {

@@ -7,6 +7,7 @@ import { DeribitService } from '../deribit/deribit.service'
 import { ChatRouter } from '../chat/chat.router'
 import { ChatService } from '../chat/chat.service'
 import { GreeksService } from '../greeks/greeks.service'
+import { RsMonitorService } from '../rs-monitor/rs-monitor.service'
 import { rawBookSummaryBTC, rawIndexPriceBTC, rawHistoricalVolatilityBTC, rawTradesBTC } from '@kok/shared-types/fixtures'
 
 describe('TrpcService', () => {
@@ -42,6 +43,30 @@ describe('TrpcService', () => {
           useValue: {
             get: vi.fn(),
             set: vi.fn(),
+          },
+        },
+        {
+          provide: GreeksService,
+          useValue: {
+            getExposure: vi.fn().mockResolvedValue({
+              currency: 'BTC',
+              total_gex: 0,
+              total_dex: 0,
+              zero_gamma_strike: null,
+              call_wall: null,
+              put_wall: null,
+              by_strike: [],
+              progress: { total: 0, completed: 0, is_complete: true },
+              timestamp: new Date().toISOString(),
+            }),
+          },
+        },
+        {
+          provide: RsMonitorService,
+          useValue: {
+            getLatestScores: vi.fn().mockResolvedValue([]),
+            getScoreHistory: vi.fn().mockResolvedValue([]),
+            getTokenChartData: vi.fn().mockResolvedValue({ tokenSymbol: '', points: [] }),
           },
         },
       ],
