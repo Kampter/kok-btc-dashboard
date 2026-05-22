@@ -1,6 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OverviewGrid } from './OverviewGrid'
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+function renderWithQuery(ui: React.ReactElement) {
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  )
+}
 
 vi.mock('./modules/overview/MarketOverviewCard', () => ({
   MarketOverviewCard: ({ onClick, isActive }: any) => (
@@ -37,10 +46,15 @@ vi.mock('./modules/overview/GreeksOverviewCard', () => ({
     <button data-testid="greeks-card" onClick={onClick}>Greeks 风险暴露</button>
   ),
 }))
+vi.mock('./modules/overview/RSMOverviewCard', () => ({
+  RSMOverviewCard: ({ onClick }: any) => (
+    <button data-testid="rs-monitor-card" onClick={onClick}>相对强度监控</button>
+  ),
+}))
 
 describe('OverviewGrid', () => {
-  it('renders all 7 module cards', () => {
-    render(<OverviewGrid activeModule={null} onModuleClick={vi.fn()} />)
+  it('renders all 8 module cards', () => {
+    renderWithQuery(<OverviewGrid activeModule={null} onModuleClick={vi.fn()} />)
     expect(screen.getByTestId('market-card')).toBeInTheDocument()
     expect(screen.getByTestId('volatility-card')).toBeInTheDocument()
     expect(screen.getByTestId('positions-card')).toBeInTheDocument()
@@ -48,16 +62,17 @@ describe('OverviewGrid', () => {
     expect(screen.getByTestId('expiry-card')).toBeInTheDocument()
     expect(screen.getByTestId('oi-card')).toBeInTheDocument()
     expect(screen.getByTestId('greeks-card')).toBeInTheDocument()
+    expect(screen.getByTestId('rs-monitor-card')).toBeInTheDocument()
   })
 
   it('marks active module card', () => {
-    render(<OverviewGrid activeModule="overview" onModuleClick={vi.fn()} />)
+    renderWithQuery(<OverviewGrid activeModule="overview" onModuleClick={vi.fn()} />)
     expect(screen.getByTestId('market-card')).toHaveAttribute('data-active', 'true')
   })
 
   it('calls onModuleClick with module id when card is clicked', () => {
     const handleClick = vi.fn()
-    render(<OverviewGrid activeModule={null} onModuleClick={handleClick} />)
+    renderWithQuery(<OverviewGrid activeModule={null} onModuleClick={handleClick} />)
     fireEvent.click(screen.getByTestId('market-card'))
     expect(handleClick).toHaveBeenCalledWith('overview')
   })
