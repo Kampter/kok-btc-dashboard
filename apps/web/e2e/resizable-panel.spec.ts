@@ -77,9 +77,15 @@ test.describe('AI Copilot Resizable Panel', () => {
     // Reload and verify panel is still wider than default
     await page.reload()
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(200)
-    const restoredBox = await panel.boundingBox()
-    expect(restoredBox!.width).toBeGreaterThan(380)
+
+    // Poll until React hydration finishes and localStorage width is applied
+    // (SSR renders default width; client read from localStorage happens post-hydration)
+    await expect.poll(async () => {
+      const box = await panel.boundingBox()
+      return box?.width ?? 0
+    }, {
+      timeout: 5000,
+    }).toBeGreaterThan(380)
   })
 
   test('main content adapts when panel is collapsed', async ({ page }) => {
